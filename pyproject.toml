@@ -1,0 +1,37 @@
+# Development tooling only; the integration itself is installed by HACS or by
+# copying custom_components/doorbell into your Home Assistant config directory.
+[project]
+name = "doorbell-integration-dev"
+version = "0.0.0"
+description = "Dev environment for the Doorbell Home Assistant custom integration"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest-homeassistant-custom-component>=0.13.300",
+    "ruff>=0.6",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["custom_components"]
+known-third-party = ["homeassistant", "voluptuous"]
