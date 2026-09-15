@@ -79,3 +79,10 @@ uv run pytest -q
 
 The tests discover a panel through the MQTT integration's test client, using the same discovery
 payloads dxbell publishes, and check what reaches the panel's command topics.
+
+## Releasing
+
+Bump `version` in `custom_components/doorbell/manifest.json` and push to `main`. Once hassfest and
+the tests pass, CI tags the commit `v<version>` and publishes a GitHub release listing the commits
+since the previous tag. HACS offers that release as the update. Pushes that don't change the
+version publish nothing.
