@@ -2,85 +2,33 @@
   "config": {
     "step": {
       "user": {
-        "title": "Add a DoorMonitor panel",
-        "description": "The panel must publish to the MQTT broker Home Assistant is connected to.",
+        "title": "Pick the DoorMonitor panel",
+        "description": "Choose the panel device that the MQTT integration discovered. If it is not listed, make sure MQTT discovery is enabled on the panel.",
         "data": {
-          "name": "Name",
-          "base_topic": "MQTT base topic",
-          "discovery_prefix": "MQTT discovery prefix",
-          "doors": "Door ids (comma separated)",
-          "gate_id": "Gate id"
-        },
-        "data_description": {
-          "base_topic": "Same as `mqtt.base_topic` in the panel configuration.",
-          "discovery_prefix": "Only used by the purge_mqtt_discovery service.",
-          "doors": "The `[[doors]]` ids from the panel configuration, e.g. front, workshop, garage.",
-          "gate_id": "The `[gate]` id from the panel configuration."
+          "device_id": "Panel"
         }
+      },
+      "links": {
+        "title": "Link doors and gate",
+        "description": "For each door and gate on {device}, pick the real lock or cover it stands for. Presses on the panel then operate the real entity, and the panel always shows the real state. Leave a field empty to leave it unsynced."
       }
     },
     "error": {
-      "invalid_topic": "Topic must not be empty or contain wildcards.",
-      "no_doors": "Enter at least one door id.",
-      "invalid_id": "Enter a valid id."
+      "no_panel_entities": "This device has no lock or cover entities."
     },
     "abort": {
-      "already_configured": "A panel with this base topic is already configured.",
-      "mqtt_not_configured": "Set up the MQTT integration first."
+      "already_configured": "This panel is already set up."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Doorbell options",
-        "description": "Optionally map each panel door ({doors}) and the gate to a real Home Assistant entity. Presses on the panel then drive the real entity, and the panel follows its state.",
-        "data": {
-          "base_topic": "MQTT base topic",
-          "discovery_prefix": "MQTT discovery prefix",
-          "doors": "Door ids (comma separated)",
-          "gate_id": "Gate id",
-          "gate_entity": "Real gate/cover entity"
-        }
+        "title": "Link doors and gate",
+        "description": "For each door and gate on {device}, pick the real lock or cover it stands for. Leave a field empty to leave it unsynced."
       }
     },
-    "error": {
-      "invalid_topic": "Topic must not be empty or contain wildcards.",
-      "no_doors": "Enter at least one door id.",
-      "invalid_id": "Enter a valid id."
-    }
-  },
-  "device_automation": {
-    "trigger_type": {
-      "ring": "Doorbell rang",
-      "login": "Someone logged in on the panel",
-      "logout": "Panel logged out",
-      "lock_request": "Lock/unlock requested on the panel",
-      "gate_request": "Gate action requested on the panel"
-    }
-  },
-  "services": {
-    "set_party_mode": {
-      "name": "Set party mode",
-      "description": "Sends a party mode to the panel.",
-      "fields": {
-        "mode": { "name": "Mode", "description": "Party mode to show on the panel." },
-        "device_id": { "name": "Doorbell", "description": "Which panel, if more than one is configured." }
-      }
-    },
-    "set_house_state": {
-      "name": "Set house state",
-      "description": "Sends a house state (home/away/vacation) to the panel.",
-      "fields": {
-        "state": { "name": "State", "description": "House state to show on the panel." },
-        "device_id": { "name": "Doorbell", "description": "Which panel, if more than one is configured." }
-      }
-    },
-    "purge_mqtt_discovery": {
-      "name": "Purge MQTT discovery",
-      "description": "Removes the retained MQTT discovery configs the panel publishes itself, so its entities are not duplicated by the MQTT integration.",
-      "fields": {
-        "device_id": { "name": "Doorbell", "description": "Which panel, if more than one is configured." }
-      }
+    "abort": {
+      "no_panel_entities": "The panel device no longer has any lock or cover entities."
     }
   }
 }

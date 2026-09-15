@@ -1,143 +1,62 @@
-"""The Doorbell integration: a DoorMonitor panel as a Home Assistant device."""
+"""The Doorbell integration: keep a DoorMonitor panel's doors and gate in sync with real ones."""
 
 from __future__ import annotations
 
 import logging
 
-import voluptuous as vol
-from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall, callback
-from homeassistant.exceptions import ConfigEntryNotReady, ServiceValidationError
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers import device_registry as dr
 
-from .const import (
-    ATTR_DEVICE_ID,
-    ATTR_MODE,
-    ATTR_STATE,
-    DOMAIN,
-    HOUSE_STATES,
-    PARTY_MODES,
-    SERVICE_PURGE_MQTT_DISCOVERY,
-    SERVICE_SET_HOUSE_STATE,
-    SERVICE_SET_PARTY_MODE,
-)
-from .hub import DoorbellHub
+from .const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN
+from .sync import PanelSync, panel_entity_ids
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [
-    Platform.BINARY_SENSOR,
-    Platform.COVER,
-    Platform.EVENT,
-    Platform.LOCK,
-    Platform.SELECT,
-    Platform.SENSOR,
-]
-
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-type DoorbellConfigEntry = ConfigEntry[DoorbellHub]
-
-_SERVICE_TARGET = {vol.Optional(ATTR_DEVICE_ID): cv.string}
-SET_PARTY_MODE_SCHEMA = vol.Schema(
-    {**_SERVICE_TARGET, vol.Required(ATTR_MODE): vol.In(PARTY_MODES)}
-)
-SET_HOUSE_STATE_SCHEMA = vol.Schema(
-    {**_SERVICE_TARGET, vol.Required(ATTR_STATE): vol.In(HOUSE_STATES)}
-)
-PURGE_SCHEMA = vol.Schema(_SERVICE_TARGET)
-
-
-async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Register domain services once."""
-    _async_register_services(hass)
-    return True
+type DoorbellConfigEntry = ConfigEntry[PanelSync]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: DoorbellConfigEntry) -> bool:
-    if not await mqtt.async_wait_for_mqtt_client(hass):
-        raise ConfigEntryNotReady("MQTT integration is not available")
+    device_id = entry.data[CONF_DEVICE_ID]
+    if dr.async_get(hass).async_get(device_id) is None:
+        raise ConfigEntryError(
+            f"Panel device {device_id} no longer exists; remove and re-add the integration"
+        )
 
-    hub = DoorbellHub(hass, entry)
-    await hub.async_setup()
-    entry.runtime_data = hub
+    panel_entities = set(panel_entity_ids(hass, device_id))
+    links: dict[str, str] = {}
+    for panel, real in (entry.options.get(CONF_LINKS) or {}).items():
+        if panel in panel_entities:
+            links[panel] = real
+        else:
+            _LOGGER.warning("%s: %s is no longer on the panel, not syncing it", entry.title, panel)
 
-    _async_remove_stale_entities(hass, entry, hub)
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    sync = PanelSync(hass, entry.title, links)
+    sync.async_start()
+    entry.runtime_data = sync
+    entry.async_on_unload(sync.async_stop)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: DoorbellConfigEntry) -> bool:
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok:
-        await entry.runtime_data.async_unload()
-    return unload_ok
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    if entry.version < 3:
+        _LOGGER.error(
+            "%s was set up by an older Doorbell version that mirrored the panel over raw MQTT. "
+            "Remove it and add the integration again, picking the panel's MQTT device",
+            entry.title,
+        )
+        return False
+    return True
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: DoorbellConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
-
-
-@callback
-def _async_remove_stale_entities(
-    hass: HomeAssistant, entry: DoorbellConfigEntry, hub: DoorbellHub
-) -> None:
-    """Drop lock/cover entities for doors or gates that were removed from the options."""
-    registry = er.async_get(hass)
-    valid = {f"{entry.entry_id}_lock_{door}" for door in hub.config.doors}
-    valid.add(f"{entry.entry_id}_cover_{hub.config.gate_id}")
-    for reg_entry in er.async_entries_for_config_entry(registry, entry.entry_id):
-        if reg_entry.domain not in ("lock", "cover"):
-            continue
-        if reg_entry.unique_id not in valid:
-            _LOGGER.info("Removing stale entity %s", reg_entry.entity_id)
-            registry.async_remove(reg_entry.entity_id)
-
-
-@callback
-def _async_register_services(hass: HomeAssistant) -> None:
-    if hass.services.has_service(DOMAIN, SERVICE_SET_PARTY_MODE):
-        return
-
-    def _hubs() -> list[DoorbellHub]:
-        return [
-            entry.runtime_data
-            for entry in hass.config_entries.async_loaded_entries(DOMAIN)
-            if isinstance(entry.runtime_data, DoorbellHub)
-        ]
-
-    def _resolve(call: ServiceCall) -> DoorbellHub:
-        hubs = _hubs()
-        device_id = call.data.get(ATTR_DEVICE_ID)
-        if device_id:
-            for hub in hubs:
-                if hub.device_id == device_id:
-                    return hub
-            raise ServiceValidationError(f"No doorbell with device_id {device_id}")
-        if len(hubs) == 1:
-            return hubs[0]
-        if not hubs:
-            raise ServiceValidationError("No doorbell is configured")
-        raise ServiceValidationError("Several doorbells are configured; pass device_id")
-
-    async def _set_party_mode(call: ServiceCall) -> None:
-        await _resolve(call).async_set_party_mode(call.data[ATTR_MODE])
-
-    async def _set_house_state(call: ServiceCall) -> None:
-        await _resolve(call).async_set_house_state(call.data[ATTR_STATE])
-
-    async def _purge(call: ServiceCall) -> None:
-        await _resolve(call).async_purge_mqtt_discovery()
-
-    hass.services.async_register(
-        DOMAIN, SERVICE_SET_PARTY_MODE, _set_party_mode, schema=SET_PARTY_MODE_SCHEMA
-    )
-    hass.services.async_register(
-        DOMAIN, SERVICE_SET_HOUSE_STATE, _set_house_state, schema=SET_HOUSE_STATE_SCHEMA
-    )
-    hass.services.async_register(DOMAIN, SERVICE_PURGE_MQTT_DISCOVERY, _purge, schema=PURGE_SCHEMA)

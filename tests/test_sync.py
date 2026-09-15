@@ -1,136 +1,196 @@
-"""Two-way sync between panel doors/gate and mapped real entities."""
+"""Two-way sync between the panel's discovered MQTT entities and the real entities."""
 
 from __future__ import annotations
 
-from typing import Any
+from datetime import timedelta
 
 import pytest
-from homeassistant.core import HomeAssistant
+from homeassistant.const import EVENT_CALL_SERVICE
+from homeassistant.core import Event, HomeAssistant
+from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
+    async_capture_events,
     async_fire_mqtt_message,
-    async_mock_service,
+    async_fire_time_changed,
 )
 from pytest_homeassistant_custom_component.typing import MqttMockHAClient
 
+from custom_components.doorbell.const import REQUEST_TIMEOUT_S
 
-@pytest.fixture
-def entry_options(mapped_options: dict[str, Any]) -> dict[str, Any]:
-    return mapped_options
+from .conftest import REAL_FRONT, REAL_GATE
 
-
-@pytest.fixture(autouse=True)
-def real_entities(hass: HomeAssistant) -> None:
-    hass.states.async_set("lock.real_front", "locked")
-    hass.states.async_set("cover.real_gate", "closed")
+FRONT_CMD = "doorbell/lock/front/command"
+GATE_CMD = "doorbell/cover/gate/command"
 
 
 def _published(mqtt_mock: MqttMockHAClient, topic: str) -> list[str]:
     return [c.args[1] for c in mqtt_mock.async_publish.call_args_list if c.args[0] == topic]
 
 
-async def test_panel_unlock_request_drives_real_lock(
-    hass: HomeAssistant, setup_entry: MockConfigEntry
-) -> None:
-    unlock_calls = async_mock_service(hass, "lock", "unlock")
-    lock_calls = async_mock_service(hass, "lock", "lock")
+def _real_calls(events: list[Event], *real: str) -> list[tuple[str, str]]:
+    """Service calls made on real (non-panel) entities, as (service, entity_id)."""
+    return [
+        (e.data["service"], e.data["service_data"]["entity_id"])
+        for e in events
+        if e.data["service_data"].get("entity_id") in (real or (REAL_FRONT, REAL_GATE))
+    ]
 
-    async_fire_mqtt_message(hass, "doorbell/lock/front/command", "UNLOCK")
+
+@pytest.fixture
+async def calls(
+    hass: HomeAssistant, setup_entry: MockConfigEntry, mqtt_mock: MqttMockHAClient
+) -> list[Event]:
+    """Service calls from here on; start-up pushes are forgotten."""
+    mqtt_mock.async_publish.reset_mock()
+    return async_capture_events(hass, EVENT_CALL_SERVICE)
+
+
+async def _panel(hass: HomeAssistant, topic: str, payload: str) -> None:
+    async_fire_mqtt_message(hass, topic, payload)
     await hass.async_block_till_done()
-    assert [c.data["entity_id"] for c in unlock_calls] == ["lock.real_front"]
 
-    # Real lock is already locked: a LOCK request needs no service call.
-    async_fire_mqtt_message(hass, "doorbell/lock/front/command", "LOCK")
+
+async def _real(hass: HomeAssistant, entity_id: str, state: str) -> None:
+    hass.states.async_set(entity_id, state)
     await hass.async_block_till_done()
-    assert lock_calls == []
 
 
-async def test_unmapped_door_request_does_not_call_services(
-    hass: HomeAssistant, setup_entry: MockConfigEntry
-) -> None:
-    unlock_calls = async_mock_service(hass, "lock", "unlock")
-    async_fire_mqtt_message(hass, "doorbell/lock/workshop/command", "UNLOCK")
-    await hass.async_block_till_done()
-    assert unlock_calls == []
-
-
-async def test_ha_unlock_drives_real_lock_and_panel(
+@pytest.mark.parametrize("real_states", [{REAL_FRONT: "unlocked", REAL_GATE: "closed"}])
+async def test_setup_shows_real_state_on_panel(
     hass: HomeAssistant, setup_entry: MockConfigEntry, mqtt_mock: MqttMockHAClient
 ) -> None:
-    # Mocking lock.unlock also swallows calls to lock.doorbell_front, so go
-    # through the hub (the entity delegates to it 1:1, see test_entities).
-    unlock_calls = async_mock_service(hass, "lock", "unlock")
-    await setup_entry.runtime_data.async_unlock_door("front")
-    await hass.async_block_till_done()
-    assert _published(mqtt_mock, "doorbell/lock/front/command") == ["UNLOCK"]
-    assert [c.data["entity_id"] for c in unlock_calls] == ["lock.real_front"]
+    assert _published(mqtt_mock, FRONT_CMD) == ["UNLOCK"]
+    # Panel already claims closed, but that may be stale: it is told anyway.
+    assert _published(mqtt_mock, GATE_CMD) == ["CLOSE"]
+    assert _published(mqtt_mock, "doorbell/lock/workshop/command") == []  # not linked
 
 
-async def test_real_lock_change_is_pushed_to_panel(
-    hass: HomeAssistant, setup_entry: MockConfigEntry, mqtt_mock: MqttMockHAClient
+async def test_panel_press_drives_real_lock(
+    hass: HomeAssistant, calls: list[Event], mqtt_mock: MqttMockHAClient
 ) -> None:
-    async_fire_mqtt_message(hass, "doorbell/lock/front/state", "locked")
-    await hass.async_block_till_done()
-    assert _published(mqtt_mock, "doorbell/lock/front/command") == []
-
-    hass.states.async_set("lock.real_front", "unlocking")
-    await hass.async_block_till_done()
-    assert _published(mqtt_mock, "doorbell/lock/front/command") == []  # transitional: wait
-
-    hass.states.async_set("lock.real_front", "unlocked")
-    await hass.async_block_till_done()
-    assert _published(mqtt_mock, "doorbell/lock/front/command") == ["UNLOCK"]
-
-    # The broker echo of our own command was suppressed: no real-lock service
-    # call, and the panel confirming the new state publishes nothing more.
-    unlock_calls = async_mock_service(hass, "lock", "unlock")
-    async_fire_mqtt_message(hass, "doorbell/lock/front/state", "unlocked")
-    await hass.async_block_till_done()
-    assert unlock_calls == []
-    assert _published(mqtt_mock, "doorbell/lock/front/command") == ["UNLOCK"]
+    await _panel(hass, "doorbell/lock/front/state", "unlocked")
+    assert _real_calls(calls) == [("unlock", REAL_FRONT)]
+    assert _published(mqtt_mock, FRONT_CMD) == []
 
 
-async def test_panel_state_lagging_real_lock_is_corrected(
-    hass: HomeAssistant, setup_entry: MockConfigEntry, mqtt_mock: MqttMockHAClient
+async def test_panel_press_already_under_way_is_not_repeated(
+    hass: HomeAssistant, calls: list[Event]
 ) -> None:
-    # Real lock is locked (fixture); panel claims unlocked → push LOCK to the panel.
-    async_fire_mqtt_message(hass, "doorbell/lock/front/state", "unlocked")
+    await _real(hass, REAL_FRONT, "unlocking")
+    await _panel(hass, "doorbell/lock/front/state", "unlocked")
+    assert _real_calls(calls) == []
+
+
+async def test_real_change_is_shown_on_panel_and_echo_ignored(
+    hass: HomeAssistant, calls: list[Event], mqtt_mock: MqttMockHAClient
+) -> None:
+    await _real(hass, REAL_FRONT, "unlocking")
+    assert _published(mqtt_mock, FRONT_CMD) == []  # moving: wait
+
+    await _real(hass, REAL_FRONT, "unlocked")
+    assert _published(mqtt_mock, FRONT_CMD) == ["UNLOCK"]
+
+    await _panel(hass, "doorbell/lock/front/state", "unlocked")
+    assert _real_calls(calls) == []
+    assert _published(mqtt_mock, FRONT_CMD) == ["UNLOCK"]
+
+
+async def test_quick_relock_does_not_bounce(
+    hass: HomeAssistant, calls: list[Event], mqtt_mock: MqttMockHAClient
+) -> None:
+    await _real(hass, REAL_FRONT, "unlocked")
+    await _real(hass, REAL_FRONT, "locked")  # auto-relock before the panel answered
+    assert _published(mqtt_mock, FRONT_CMD) == ["UNLOCK"]
+
+    # The late echo is not a request to unlock; the panel is corrected instead.
+    await _panel(hass, "doorbell/lock/front/state", "unlocked")
+    assert _published(mqtt_mock, FRONT_CMD) == ["UNLOCK", "LOCK"]
+    await _panel(hass, "doorbell/lock/front/state", "locked")
+    assert _published(mqtt_mock, FRONT_CMD) == ["UNLOCK", "LOCK"]
+    assert _real_calls(calls) == []
+
+
+async def test_panel_coming_online_gets_real_state(
+    hass: HomeAssistant, calls: list[Event], mqtt_mock: MqttMockHAClient
+) -> None:
+    await _panel(hass, "doorbell/availability", "offline")
+    await _real(hass, REAL_FRONT, "unlocked")
+    assert _published(mqtt_mock, FRONT_CMD) == []  # nobody to tell
+
+    await _panel(hass, "doorbell/availability", "online")
+    assert _published(mqtt_mock, FRONT_CMD) == ["UNLOCK"]
+    await _panel(hass, "doorbell/lock/front/state", "unlocked")
+
+    # The panel re-publishing its boot default right after is not a press.
+    await _panel(hass, "doorbell/lock/front/state", "locked")
+    assert _published(mqtt_mock, FRONT_CMD) == ["UNLOCK", "UNLOCK"]
+    assert _real_calls(calls) == []
+
+
+async def test_real_entity_not_following_request_is_shown_on_panel(
+    hass: HomeAssistant, calls: list[Event], mqtt_mock: MqttMockHAClient
+) -> None:
+    await _panel(hass, "doorbell/lock/front/state", "unlocked")
+    assert _real_calls(calls) == [("unlock", REAL_FRONT)]
+
+    # The real lock never moves.
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=REQUEST_TIMEOUT_S + 1))
     await hass.async_block_till_done()
-    assert _published(mqtt_mock, "doorbell/lock/front/command") == ["LOCK"]
+    assert _published(mqtt_mock, FRONT_CMD) == ["LOCK"]
+
+
+async def test_real_entity_following_request_leaves_panel_alone(
+    hass: HomeAssistant, calls: list[Event], mqtt_mock: MqttMockHAClient
+) -> None:
+    await _panel(hass, "doorbell/lock/front/state", "unlocked")
+    await _real(hass, REAL_FRONT, "unlocking")
+    await _real(hass, REAL_FRONT, "unlocked")
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=REQUEST_TIMEOUT_S + 1))
+    await hass.async_block_till_done()
+    assert _published(mqtt_mock, FRONT_CMD) == []
 
 
 async def test_gate_sync_both_directions(
-    hass: HomeAssistant, setup_entry: MockConfigEntry, mqtt_mock: MqttMockHAClient
+    hass: HomeAssistant, calls: list[Event], mqtt_mock: MqttMockHAClient
 ) -> None:
-    open_calls = async_mock_service(hass, "cover", "open_cover")
-    stop_calls = async_mock_service(hass, "cover", "stop_cover")
+    await _panel(hass, "doorbell/cover/gate/state", "open")
+    assert _real_calls(calls) == [("open_cover", REAL_GATE)]
 
-    async_fire_mqtt_message(hass, "doorbell/cover/gate/command", "OPEN")
-    async_fire_mqtt_message(hass, "doorbell/cover/gate/command", "STOP")
-    await hass.async_block_till_done()
-    assert [c.data["entity_id"] for c in open_calls] == ["cover.real_gate"]
-    assert [c.data["entity_id"] for c in stop_calls] == ["cover.real_gate"]
+    await _real(hass, REAL_GATE, "opening")
+    await _real(hass, REAL_GATE, "open")
+    assert _published(mqtt_mock, GATE_CMD) == []  # panel already shows open
 
-    # Panel says closed, real gate is closed: nothing to do.
-    async_fire_mqtt_message(hass, "doorbell/cover/gate/state", "closed")
-    await hass.async_block_till_done()
-    assert _published(mqtt_mock, "doorbell/cover/gate/command") == []
-
-    hass.states.async_set("cover.real_gate", "opening")
-    await hass.async_block_till_done()
-    assert _published(mqtt_mock, "doorbell/cover/gate/command") == []
-
-    hass.states.async_set("cover.real_gate", "open")
-    await hass.async_block_till_done()
-    assert _published(mqtt_mock, "doorbell/cover/gate/command") == ["OPEN"]
+    await _real(hass, REAL_GATE, "closing")
+    assert _published(mqtt_mock, GATE_CMD) == []
+    await _real(hass, REAL_GATE, "closed")
+    assert _published(mqtt_mock, GATE_CMD) == ["CLOSE"]
 
 
-async def test_lock_attributes_show_mapping(
-    hass: HomeAssistant, setup_entry: MockConfigEntry
+async def test_unlinked_door_and_unavailable_real_lock(
+    hass: HomeAssistant, calls: list[Event], mqtt_mock: MqttMockHAClient
 ) -> None:
-    state = hass.states.get("lock.doorbell_front")
-    assert state.attributes["mapped_entity_id"] == "lock.real_front"
-    assert hass.states.get("lock.doorbell_workshop").attributes["mapped_entity_id"] is None
-    assert (
-        hass.states.get("cover.doorbell_gate").attributes["mapped_entity_id"] == "cover.real_gate"
-    )
+    await _panel(hass, "doorbell/lock/workshop/state", "unlocked")
+    assert calls == []
+
+    await _real(hass, REAL_FRONT, "unavailable")
+    await _panel(hass, "doorbell/lock/front/state", "unlocked")
+    assert _real_calls(calls) == []
+
+    # Once the real lock is back, the panel shows its state.
+    await _real(hass, REAL_FRONT, "locked")
+    assert _published(mqtt_mock, FRONT_CMD) == ["LOCK"]
+
+
+async def test_unload_stops_sync(
+    hass: HomeAssistant,
+    setup_entry: MockConfigEntry,
+    calls: list[Event],
+    mqtt_mock: MqttMockHAClient,
+) -> None:
+    assert await hass.config_entries.async_unload(setup_entry.entry_id)
+    await hass.async_block_till_done()
+    await _real(hass, REAL_FRONT, "unlocked")
+    await _panel(hass, "doorbell/cover/gate/state", "open")
+    assert _published(mqtt_mock, FRONT_CMD) == []
+    assert _real_calls(calls) == []

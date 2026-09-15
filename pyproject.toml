@@ -4,7 +4,7 @@
 name = "doorbell-integration-dev"
 version = "0.0.0"
 description = "Dev environment for the Doorbell Home Assistant custom integration"
-requires-python = ">=3.13"
+requires-python = ">=3.13.2"
 dependencies = []
 
 [dependency-groups]

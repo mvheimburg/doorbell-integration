@@ -1,7 +1,0 @@
-{
-  "services": {
-    "set_party_mode": { "service": "mdi:party-popper" },
-    "set_house_state": { "service": "mdi:home-switch" },
-    "purge_mqtt_discovery": { "service": "mdi:broom" }
-  }
-}

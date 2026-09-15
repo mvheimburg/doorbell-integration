@@ -5,9 +5,9 @@
   "config_flow": true,
   "dependencies": ["mqtt"],
   "documentation": "https://github.com/mvheimburg/doorbell-integration-hacs",
-  "integration_type": "device",
+  "integration_type": "service",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/mvheimburg/doorbell-integration-hacs/issues",
   "requirements": [],
-  "version": "0.2.0"
+  "version": "0.3.0"
 }
