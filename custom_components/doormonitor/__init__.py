@@ -1,4 +1,4 @@
-"""The Doorbell integration: keep a DoorMonitor panel's doors and gate in sync with real ones."""
+"""The DoorMonitor integration: keep a DoorMonitor panel's doors and gate in sync with real ones."""
 
 from __future__ import annotations
 
@@ -17,10 +17,10 @@ _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-type DoorbellConfigEntry = ConfigEntry[PanelSync]
+type DoorMonitorConfigEntry = ConfigEntry[PanelSync]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: DoorbellConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: DoorMonitorConfigEntry) -> bool:
     device_id = entry.data[CONF_DEVICE_ID]
     if dr.async_get(hass).async_get(device_id) is None:
         raise ConfigEntryError(
@@ -43,20 +43,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: DoorbellConfigEntry) -> 
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: DoorbellConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: DoorMonitorConfigEntry) -> bool:
     return True
 
 
-async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    if entry.version < 3:
-        _LOGGER.error(
-            "%s was set up by an older Doorbell version that mirrored the panel over raw MQTT. "
-            "Remove it and add the integration again, picking the panel's MQTT device",
-            entry.title,
-        )
-        return False
-    return True
-
-
-async def _async_update_listener(hass: HomeAssistant, entry: DoorbellConfigEntry) -> None:
+async def _async_update_listener(hass: HomeAssistant, entry: DoorMonitorConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)

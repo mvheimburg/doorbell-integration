@@ -1,1 +1,1 @@
-"""Tests for the Doorbell custom integration."""
+"""Tests for the DoorMonitor custom integration."""

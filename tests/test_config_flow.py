@@ -10,7 +10,7 @@ from homeassistant.helpers import device_registry as dr
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.typing import MqttMockHAClient
 
-from custom_components.doorbell.const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN
+from custom_components.doormonitor.const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN
 
 from .conftest import PANEL_FRONT, PANEL_GATE, PANEL_WORKSHOP, REAL_FRONT, REAL_GATE
 
@@ -100,17 +100,8 @@ async def test_setup_fails_when_device_is_gone(
     hass: HomeAssistant, mqtt_mock: MqttMockHAClient
 ) -> None:
     entry = MockConfigEntry(
-        domain=DOMAIN, data={CONF_DEVICE_ID: "nope"}, options={CONF_LINKS: {}}, version=3
+        domain=DOMAIN, data={CONF_DEVICE_ID: "nope"}, options={CONF_LINKS: {}}, version=1
     )
     entry.add_to_hass(hass)
     assert not await hass.config_entries.async_setup(entry.entry_id)
     assert entry.state is ConfigEntryState.SETUP_ERROR
-
-
-async def test_old_entries_are_not_migrated(
-    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
-) -> None:
-    entry = MockConfigEntry(domain=DOMAIN, data={"base_topic": "doorbell"}, version=2)
-    entry.add_to_hass(hass)
-    assert not await hass.config_entries.async_setup(entry.entry_id)
-    assert entry.state is ConfigEntryState.MIGRATION_ERROR

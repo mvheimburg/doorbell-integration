@@ -51,7 +51,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="v$(jq -r .version custom_components/doorbell/manifest.json)"
+          tag="v$(jq -r .version custom_components/doormonitor/manifest.json)"
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "$tag is already released"
             exit 0

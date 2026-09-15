@@ -16,7 +16,7 @@ from pytest_homeassistant_custom_component.common import (
 )
 from pytest_homeassistant_custom_component.typing import MqttMockHAClient
 
-from custom_components.doorbell.const import REQUEST_TIMEOUT_S
+from custom_components.doormonitor.const import REQUEST_TIMEOUT_S
 
 from .conftest import REAL_FRONT, REAL_GATE
 

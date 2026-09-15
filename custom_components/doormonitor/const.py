@@ -1,10 +1,10 @@
-"""Constants for the Doorbell integration."""
+"""Constants for the DoorMonitor integration."""
 
 from __future__ import annotations
 
 from typing import Final
 
-DOMAIN: Final = "doorbell"
+DOMAIN: Final = "doormonitor"
 
 # -- config entry keys ---------------------------------------------------------
 #: Device registry id of the panel device the MQTT integration discovered.

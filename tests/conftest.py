@@ -11,7 +11,7 @@ from homeassistant.helpers import device_registry as dr
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_mqtt_message
 from pytest_homeassistant_custom_component.typing import MqttMockHAClient, MqttMockPahoClient
 
-from custom_components.doorbell.const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN
+from custom_components.doormonitor.const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN
 
 
 @pytest.fixture(autouse=True)
@@ -138,7 +138,7 @@ async def setup_entry(
         unique_id=panel,
         data={CONF_DEVICE_ID: panel},
         options={CONF_LINKS: links},
-        version=3,
+        version=1,
     )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)

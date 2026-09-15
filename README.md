@@ -1,4 +1,4 @@
-# Doorbell — link a DoorMonitor panel to your real doors and gate
+# DoorMonitor for Home Assistant — link the panel to your real doors and gate
 
 The [DoorMonitor](https://github.com/mvheimburg/door_monitor) wall panel (`dxbell`) announces itself
 to Home Assistant through MQTT discovery: the MQTT integration creates a device with a lock per door,
@@ -18,7 +18,7 @@ the MQTT device as they are.
 
 1. Make sure the panel has MQTT discovery enabled and shows up under
    *Settings → Devices & services → MQTT*.
-2. *Add integration → Doorbell*, and pick the panel device.
+2. *Add integration → DoorMonitor*, and pick the panel device.
 3. For each of the panel's locks and its gate cover, pick the real `lock.*` / `cover.*` entity it
    stands for. Leave a field empty to keep that door unsynced.
 
@@ -45,23 +45,30 @@ corrected once the real entity reports again.
 - The panel has no moving states for the gate. It shows the old state until the real gate has
   finished moving.
 
-## Upgrading from 0.2
+## Upgrading from 0.2 or 0.3
 
-0.2 subscribed to the panel's raw MQTT topics and created a device and entities of its own.
-Those config entries can't be migrated. Remove the entry, delete the leftover *Doorbell*
-device if one remains, and add the integration again. If you ran the old
-`doorbell.purge_mqtt_discovery` service, restart the panel so it republishes its discovery configs.
+Up to 0.3 the integration's domain was `doorbell`. Home Assistant now has a built-in integration with
+that domain (it provides the *Doorbell rang* trigger), which the old folder overrides. From 0.4 the
+domain is `doormonitor`. After updating in HACS:
+
+1. Remove the old *Doorbell* entry under *Settings → Devices & services*. If a *Doorbell* device
+   is left over from 0.2, delete it too.
+2. Delete `<config>/custom_components/doorbell` if it is still there, and restart Home Assistant.
+3. Add **DoorMonitor** and link the doors and gate again.
+
+If you ran the old `doorbell.purge_mqtt_discovery` service, restart the panel so it republishes its
+discovery configs.
 
 ## Installation
 
 ### HACS
 
-Add this repository as a custom repository (category *Integration*), install **Doorbell**, and
+Add this repository as a custom repository (category *Integration*), install **DoorMonitor**, and
 restart Home Assistant.
 
 ### Manual
 
-Copy `custom_components/doorbell` into `<config>/custom_components/` and restart.
+Copy `custom_components/doormonitor` into `<config>/custom_components/` and restart.
 
 ## Chime hardware
 
@@ -82,7 +89,7 @@ payloads dxbell publishes, and check what reaches the panel's command topics.
 
 ## Releasing
 
-Bump `version` in `custom_components/doorbell/manifest.json` and push to `main`. Once hassfest and
+Bump `version` in `custom_components/doormonitor/manifest.json` and push to `main`. Once hassfest and
 the tests pass, CI tags the commit `v<version>` and publishes a GitHub release listing the commits
 since the previous tag. HACS offers that release as the update. Pushes that don't change the
 version publish nothing.

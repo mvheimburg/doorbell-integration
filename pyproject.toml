@@ -1,9 +1,9 @@
 # Development tooling only; the integration itself is installed by HACS or by
-# copying custom_components/doorbell into your Home Assistant config directory.
+# copying custom_components/doormonitor into your Home Assistant config directory.
 [project]
 name = "doorbell-integration-dev"
 version = "0.0.0"
-description = "Dev environment for the Doorbell Home Assistant custom integration"
+description = "Dev environment for the DoorMonitor Home Assistant custom integration"
 requires-python = ">=3.13.2"
 dependencies = []
 

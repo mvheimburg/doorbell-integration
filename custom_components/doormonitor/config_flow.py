@@ -43,8 +43,8 @@ def _links_from_input(panel_entities: list[str], user_input: dict[str, Any]) -> 
     return {panel: user_input[panel] for panel in panel_entities if user_input.get(panel)}
 
 
-class DoorbellConfigFlow(ConfigFlow, domain=DOMAIN):
-    VERSION = 3
+class DoorMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
+    VERSION = 1
 
     def __init__(self) -> None:
         self._device_id: str = ""
@@ -93,10 +93,10 @@ class DoorbellConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
-        return DoorbellOptionsFlow()
+        return DoorMonitorOptionsFlow()
 
 
-class DoorbellOptionsFlow(OptionsFlow):
+class DoorMonitorOptionsFlow(OptionsFlow):
     """Change which real entities the panel's doors and gate are linked to."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
