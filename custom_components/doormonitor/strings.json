@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Pick the DoorMonitor panel",
-        "description": "Choose the panel device that the MQTT integration discovered. If it is not listed, make sure MQTT discovery is enabled on the panel.",
+        "description": "Choose the panel device. Only MQTT devices that have lock or cover entities are listed. If the panel is not there, make sure MQTT discovery is enabled on it and that its locks and gate cover are not disabled in Home Assistant.",
         "data": {
           "device_id": "Panel"
         }
@@ -17,7 +17,8 @@
       "no_panel_entities": "This device has no lock or cover entities."
     },
     "abort": {
-      "already_configured": "This panel is already set up."
+      "already_configured": "This panel is already set up.",
+      "no_panels_found": "No MQTT device with lock or cover entities was found, so there is no panel to set up."
     }
   },
   "options": {

@@ -12,7 +12,20 @@ from pytest_homeassistant_custom_component.typing import MqttMockHAClient
 
 from custom_components.doormonitor.const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN
 
-from .conftest import PANEL_FRONT, PANEL_GATE, PANEL_WORKSHOP, REAL_FRONT, REAL_GATE
+from .conftest import (
+    PANEL_FRONT,
+    PANEL_GATE,
+    PANEL_WORKSHOP,
+    REAL_FRONT,
+    REAL_GATE,
+    discover_panel,
+)
+
+
+def _offered_devices(result: dict) -> list[dict[str, str]]:
+    """The device options the user step offers."""
+    (selector,) = result["data_schema"].schema.values()
+    return selector.config["options"]
 
 
 async def test_user_flow_picks_device_and_links(hass: HomeAssistant, panel: str) -> None:
@@ -21,6 +34,7 @@ async def test_user_flow_picks_device_and_links(hass: HomeAssistant, panel: str)
     )
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "user"
+    assert _offered_devices(result) == [{"value": panel, "label": "doorbell"}]
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {CONF_DEVICE_ID: panel}
@@ -47,22 +61,43 @@ async def test_user_flow_picks_device_and_links(hass: HomeAssistant, panel: str)
     assert result["result"].state is ConfigEntryState.LOADED
 
 
-async def test_user_flow_rejects_device_without_doors(
-    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+async def test_user_flow_offers_the_panel_but_not_other_mqtt_devices(
+    hass: HomeAssistant, panel: str, mqtt_mock: MqttMockHAClient
 ) -> None:
-    other = MockConfigEntry(domain="mqtt")
-    other.add_to_hass(hass)
-    device = dr.async_get(hass).async_get_or_create(
-        config_entry_id=other.entry_id, identifiers={("mqtt", "thermostat")}, name="thermostat"
+    """An MQTT lock or cover of its own does not make a device a panel."""
+    (mqtt_entry,) = hass.config_entries.async_entries("mqtt")
+    dr.async_get(hass).async_get_or_create(
+        config_entry_id=mqtt_entry.entry_id,
+        identifiers={("mqtt", "garage_controller")},
+        name="Garage Controller",
     )
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {CONF_DEVICE_ID: device.id}
+    assert _offered_devices(result) == [{"value": panel, "label": "doorbell"}]
+
+
+async def test_user_flow_offers_an_offline_panel(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    """A panel that has not come online is still in the registry, so it is offered."""
+    device_id = await discover_panel(hass)
+    assert hass.states.get(PANEL_FRONT).state == "unavailable"
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
-    assert result["type"] is FlowResultType.FORM
-    assert result["errors"] == {CONF_DEVICE_ID: "no_panel_entities"}
+    assert _offered_devices(result) == [{"value": device_id, "label": "doorbell"}]
+
+
+async def test_user_flow_aborts_when_no_panel_was_discovered(
+    hass: HomeAssistant, mqtt_mock: MqttMockHAClient
+) -> None:
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "no_panels_found"
 
 
 async def test_user_flow_aborts_on_duplicate_device(

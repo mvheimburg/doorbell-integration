@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Final
 
 DOMAIN: Final = "doormonitor"
+#: The integration that discovers the panel and owns its entities.
+MQTT_DOMAIN: Final = "mqtt"
 
 # -- config entry keys ---------------------------------------------------------
 #: Device registry id of the panel device the MQTT integration discovered.

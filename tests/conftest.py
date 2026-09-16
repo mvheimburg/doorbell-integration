@@ -87,9 +87,8 @@ def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
     """Load custom_components/ in the test Home Assistant."""
 
 
-@pytest.fixture
-async def panel(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> str:
-    """Discover the panel through MQTT like Home Assistant would; returns its device id."""
+async def discover_panel(hass: HomeAssistant) -> str:
+    """Fire the panel's MQTT discovery configs, without any state; returns its device id."""
     for door in ("front", "workshop"):
         async_fire_mqtt_message(
             hass, f"homeassistant/lock/{door}/config", json.dumps(_lock_config(door))
@@ -100,6 +99,15 @@ async def panel(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> str:
     )
     await hass.async_block_till_done()
 
+    (device,) = dr.async_get(hass).async_get_devices(identifiers={("mqtt", "doorbell")})
+    return device.id
+
+
+@pytest.fixture
+async def panel(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> str:
+    """Discover the panel through MQTT like Home Assistant would; returns its device id."""
+    device_id = await discover_panel(hass)
+
     async_fire_mqtt_message(hass, "doorbell/availability", "online")
     async_fire_mqtt_message(hass, "doorbell/lock/front/state", "locked")
     async_fire_mqtt_message(hass, "doorbell/lock/workshop/state", "locked")
@@ -107,9 +115,7 @@ async def panel(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> str:
     await hass.async_block_till_done()
     assert hass.states.get(PANEL_FRONT).state == "locked"
     assert hass.states.get(PANEL_GATE).state == "closed"
-
-    (device,) = dr.async_get(hass).async_get_devices(identifiers={("mqtt", "doorbell")})
-    return device.id
+    return device_id
 
 
 @pytest.fixture

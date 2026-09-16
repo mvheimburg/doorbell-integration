@@ -9,22 +9,43 @@ from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResu
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.selector import (
-    DeviceSelector,
-    DeviceSelectorConfig,
-    EntityFilterSelectorConfig,
     EntitySelector,
     EntitySelectorConfig,
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
 )
 
-from .const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN, LINKABLE_DOMAINS
+from .const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN, MQTT_DOMAIN
 from .sync import panel_entity_ids
+
+
+def _device_label(device: dr.DeviceEntry) -> str:
+    return device.name_by_user or device.name or device.id
 
 
 def _device_name(hass: HomeAssistant, device_id: str) -> str:
     device = dr.async_get(hass).async_get(device_id)
-    if device is None:
-        return device_id
-    return device.name_by_user or device.name or device_id
+    return device_id if device is None else _device_label(device)
+
+
+@callback
+def _panel_options(hass: HomeAssistant) -> list[SelectOptionDict]:
+    """The MQTT devices that have lock or cover entities, i.e. the ones that could be a panel.
+
+    This is done here rather than with a ``DeviceSelector`` filter because the selector matches on
+    entities that are in the state machine, so a panel that is offline or whose entities have no
+    state yet drops out of the list. The registry always has them.
+    """
+    registry = dr.async_get(hass)
+    options = [
+        SelectOptionDict(value=device.id, label=_device_label(device))
+        for entry in hass.config_entries.async_entries(MQTT_DOMAIN)
+        for device in dr.async_entries_for_config_entry(registry, entry.entry_id)
+        if not device.disabled and panel_entity_ids(hass, device.id)
+    ]
+    return sorted(options, key=lambda option: option["label"].casefold())
 
 
 def _links_schema(panel_entities: list[str], links: dict[str, str]) -> vol.Schema:
@@ -51,6 +72,10 @@ class DoorMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
         self._panel_entities: list[str] = []
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        options = _panel_options(self.hass)
+        if not options:
+            return self.async_abort(reason="no_panels_found")
+
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -66,11 +91,8 @@ class DoorMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
 
         schema = vol.Schema(
             {
-                vol.Required(CONF_DEVICE_ID): DeviceSelector(
-                    DeviceSelectorConfig(
-                        integration="mqtt",
-                        entity=[EntityFilterSelectorConfig(domain=list(LINKABLE_DOMAINS))],
-                    )
+                vol.Required(CONF_DEVICE_ID): SelectSelector(
+                    SelectSelectorConfig(options=options, mode=SelectSelectorMode.DROPDOWN)
                 )
             }
         )
