@@ -1,3 +1,5 @@
+<img src="custom_components/doormonitor/brand/icon.png" alt="" width="96" align="right">
+
 # DoorMonitor for Home Assistant — link the panel to your real doors and gate
 
 The [DoorMonitor](https://github.com/mvheimburg/door_monitor) wall panel (`dxbell`) announces itself
