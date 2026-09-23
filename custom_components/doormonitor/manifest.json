@@ -1,13 +1,23 @@
 {
   "domain": "doormonitor",
   "name": "DoorMonitor",
-  "codeowners": ["@mvheimburg"],
+  "after_dependencies": [
+    "frontend",
+    "http",
+    "panel_custom",
+    "websocket_api"
+  ],
+  "codeowners": [
+    "@mvheimburg"
+  ],
   "config_flow": true,
-  "dependencies": ["mqtt"],
+  "dependencies": [
+    "mqtt"
+  ],
   "documentation": "https://github.com/mvheimburg/doorbell-integration-hacs",
   "integration_type": "service",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/mvheimburg/doorbell-integration-hacs/issues",
   "requirements": [],
-  "version": "0.4.1"
+  "version": "0.5.0"
 }

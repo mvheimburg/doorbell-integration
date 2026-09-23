@@ -14,6 +14,17 @@ CONF_DEVICE_ID: Final = "device_id"
 #: Mapping ``panel entity_id -> real entity_id`` (options).
 CONF_LINKS: Final = "links"
 
+#: Base URL of the panel API, e.g. ``http://doorbell-panel:8081`` (options).
+CONF_API_URL: Final = "api_url"
+#: The panel's ``DOORBELL_API_TOKEN`` (options).
+CONF_API_TOKEN: Final = "api_token"
+#: User id of the doorbell admin the integration acts as (options); obtained from an admin PIN.
+CONF_API_ACTOR: Final = "api_actor"
+#: That admin's name when it was chosen, for display (options).
+CONF_API_ACTOR_NAME: Final = "api_actor_name"
+#: Only used in the options form; never stored.
+CONF_ADMIN_PIN: Final = "admin_pin"
+
 #: Panel entity domains that can be linked to a real entity of the same domain.
 LINKABLE_DOMAINS: Final = ("lock", "cover")
 

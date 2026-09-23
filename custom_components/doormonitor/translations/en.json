@@ -24,12 +24,42 @@
   "options": {
     "step": {
       "init": {
+        "title": "DoorMonitor",
+        "menu_options": {
+          "links": "Link doors and gate",
+          "admin": "Admin connection"
+        }
+      },
+      "links": {
         "title": "Link doors and gate",
         "description": "For each door and gate on {device}, pick the real lock or cover it stands for. Leave a field empty to leave it unsynced."
+      },
+      "admin": {
+        "title": "Admin connection",
+        "description": "The Doorbell admin panel in the sidebar manages the panel's users, appearance, sounds, videos and photos through the panel API. Enter where the API is and its token (DOORBELL_API_TOKEN), and the PIN of a doorbell admin: the integration acts as that admin. Only the admin's identity is kept, not the PIN. Currently acting as: {actor}. Leave the token or PIN empty to keep the current one. Clear the URL to remove the connection.",
+        "data": {
+          "api_url": "Panel API URL",
+          "api_token": "API token",
+          "admin_pin": "Admin PIN"
+        },
+        "data_description": {
+          "api_url": "For example http://doorbell-panel:8081. Keep the port off the LAN.",
+          "admin_pin": "The 4-digit PIN of an active doorbell admin, for example root."
+        }
       }
     },
     "abort": {
       "no_panel_entities": "The panel device no longer has any lock or cover entities."
+    },
+    "error": {
+      "token_required": "Enter the API token.",
+      "pin_required": "Enter an admin PIN.",
+      "cannot_connect": "The panel is unreachable.",
+      "invalid_token": "The panel refused the API token.",
+      "invalid_pin": "Wrong PIN, or not an admin.",
+      "too_many_attempts": "The panel refuses PINs for a while: {detail}",
+      "actor_gone": "The admin the integration acted as is no longer an active admin. Enter an admin PIN.",
+      "unknown": "The panel refused: {detail}"
     }
   }
 }

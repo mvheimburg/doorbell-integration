@@ -34,10 +34,32 @@ jobs:
       - run: uv run ruff check .
       - run: uv run pytest -q
 
+  panel:
+    name: Admin panel
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: The committed bundle must match the source
+        run: git diff --exit-code -- ../custom_components/doormonitor/frontend
+
   # Tag and publish a GitHub release (what HACS offers as an update) whenever
   # main carries a manifest version that has not been released yet.
   release:
-    needs: [hassfest, tests]
+    needs: [hassfest, tests, panel]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

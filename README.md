@@ -16,6 +16,10 @@ This integration links them to the real locks and gate in Home Assistant and kee
 It creates no entities of its own. Ring triggers, sensors, party mode and house state all come from
 the MQTT device as they are.
 
+From 0.5 it also adds a **Doorbell** page to the sidebar, where Home Assistant administrators manage
+the panel's users, per-mode appearance, bell sounds and videos, and family photos. See
+[Admin panel](#admin-panel).
+
 ## Setup
 
 1. Make sure the panel has MQTT discovery enabled and shows up under
@@ -24,7 +28,50 @@ the MQTT device as they are.
 3. For each of the panel's locks and its gate cover, pick the real `lock.*` / `cover.*` entity it
    stands for. Leave a field empty to keep that door unsynced.
 
-Links can be changed later with **Configure** on the integration.
+Links can be changed later with **Configure → Link doors and gate** on the integration.
+
+## Admin panel
+
+The **Doorbell** sidebar page does what the panel's own admin app (`doorbell-admin`) does, inside
+Home Assistant. It is only shown to Home Assistant administrators.
+
+| Tab | What you do there |
+|-----|-------------------|
+| Users | Add, edit and delete the people who can open the door: PIN, access level (guest, resident, admin), active dates and BLE ids. A user can be linked to a Home Assistant user: pick them in the form and the name is filled in. |
+| Appearance | Pick the theme and the bell sounds or videos for each house mode (home, away, vacation) and party mode. Changes are saved as you pick and show on the doorbell within a second. |
+| Sounds & videos | Create, rename and delete groups of bell sounds or videos; upload, play, rename and delete their files. |
+| Photos | The photos the doorbell's home screen shows in turn. |
+
+Tabs appear only for what the panel offers (`GET /info`), so an older panel shows fewer tabs. Every
+rule (PIN format and uniqueness, who may be deleted, file types and sizes) is checked by the panel,
+and its messages are shown as it words them, in English. The page itself is in English and
+Norwegian Bokmål, following your Home Assistant language.
+
+### Setting up the admin connection
+
+The page talks to the panel API (API v1) through this integration, so the API token never reaches a
+browser. The panel must run with `DOORBELL_API_TOKEN` set, and Home Assistant must be able to reach
+its API port (8081 by default; keep that port off the LAN).
+
+1. **Settings → Devices & services → DoorMonitor → Configure → Admin connection.**
+2. Enter the API's address (for example `http://doorbell-panel:8081`), the token, and the PIN of an
+   active doorbell admin, for example root.
+
+The integration checks the PIN once and remembers **which admin** it belongs to, not the PIN. From
+then on every change is made as that admin, and the panel's admin guard applies to it: for example,
+the page cannot remove that admin's own admin access. Anyone who is a Home Assistant administrator
+can therefore manage the doorbell.
+
+- Leave the token or the PIN empty to keep the stored one. Clear the address to remove the
+  connection.
+- If that admin is later deleted, demoted or deactivated at the doorbell, the page says so. Enter an
+  admin PIN again under Configure.
+
+### Home Assistant user links
+
+The panel API has no field for Home Assistant users, so the integration stores the links itself, per
+panel. A Home Assistant user is linked to at most one doorbell user. Links are dropped when either
+user is deleted, and are removed with the integration entry. Linking changes nothing at the doorbell.
 
 ## How the sync works
 
@@ -87,7 +134,21 @@ uv run pytest -q
 ```
 
 The tests discover a panel through the MQTT integration's test client, using the same discovery
-payloads dxbell publishes, and check what reaches the panel's command topics.
+payloads dxbell publishes, and check what reaches the panel's command topics. The admin tests run a
+small fake of the panel API on a localhost port (`tests/fake_panel.py`).
+
+The admin page is a Lit app in `frontend/`, built into one committed file,
+`custom_components/doormonitor/frontend/doormonitor-admin-panel.js`:
+
+```sh
+cd frontend
+npm ci
+npx playwright install --with-deps chromium   # once, for the browser tests
+npm run lint && npm run typecheck && npm test
+npm run build   # commit the rebuilt bundle with the source change
+```
+
+CI fails when the committed bundle does not match the source.
 
 ## Releasing
 

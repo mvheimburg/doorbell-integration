@@ -1,0 +1,65 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Velg DoorMonitor-panelet",
+        "description": "Velg panelenheten. Bare MQTT-enheter med lås- eller dekke-entiteter vises. Hvis panelet mangler, sjekk at MQTT discovery er slått på i panelet, og at låsene og portdekket ikke er deaktivert i Home Assistant.",
+        "data": {
+          "device_id": "Panel"
+        }
+      },
+      "links": {
+        "title": "Koble dører og port",
+        "description": "Velg den ekte låsen eller porten som hver dør og port på {device} står for. Trykk på panelet styrer da den ekte entiteten, og panelet viser alltid den ekte tilstanden. La et felt stå tomt for å ikke synkronisere det."
+      }
+    },
+    "error": {
+      "no_panel_entities": "Denne enheten har ingen lås- eller dekke-entiteter."
+    },
+    "abort": {
+      "already_configured": "Dette panelet er allerede satt opp.",
+      "no_panels_found": "Fant ingen MQTT-enhet med lås- eller dekke-entiteter, så det finnes ikke noe panel å sette opp."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "DoorMonitor",
+        "menu_options": {
+          "links": "Koble dører og port",
+          "admin": "Administratortilkobling"
+        }
+      },
+      "links": {
+        "title": "Koble dører og port",
+        "description": "Velg den ekte låsen eller porten som hver dør og port på {device} står for. La et felt stå tomt for å ikke synkronisere det."
+      },
+      "admin": {
+        "title": "Administratortilkobling",
+        "description": "Ringeklokke-administrasjonen i sidepanelet styrer panelets brukere, utseende, lyder, videoer og bilder gjennom panel-API-et. Skriv inn hvor API-et er og tokenet (DOORBELL_API_TOKEN), og PIN-koden til en administrator på ringeklokken: integrasjonen handler som denne administratoren. Bare hvem administratoren er lagres, ikke PIN-koden. Handler nå som: {actor}. La token eller PIN stå tomt for å beholde det som er lagret. Tøm URL-en for å fjerne tilkoblingen.",
+        "data": {
+          "api_url": "URL til panel-API-et",
+          "api_token": "API-token",
+          "admin_pin": "Administrator-PIN"
+        },
+        "data_description": {
+          "api_url": "For eksempel http://doorbell-panel:8081. Hold porten unna det lokale nettet.",
+          "admin_pin": "Den firesifrede PIN-koden til en aktiv administrator på ringeklokken, for eksempel root."
+        }
+      }
+    },
+    "error": {
+      "token_required": "Skriv inn API-tokenet.",
+      "pin_required": "Skriv inn en administrator-PIN.",
+      "cannot_connect": "Får ikke kontakt med panelet.",
+      "invalid_token": "Panelet godtok ikke API-tokenet.",
+      "invalid_pin": "Feil PIN, eller ikke administrator.",
+      "too_many_attempts": "Panelet avviser PIN-koder en stund: {detail}",
+      "actor_gone": "Administratoren integrasjonen handlet som, er ikke lenger en aktiv administrator. Skriv inn en administrator-PIN.",
+      "unknown": "Panelet avviste: {detail}"
+    },
+    "abort": {
+      "no_panel_entities": "Panelenheten har ikke lenger noen lås- eller dekke-entiteter."
+    }
+  }
+}

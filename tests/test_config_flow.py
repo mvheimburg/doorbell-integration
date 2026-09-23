@@ -118,6 +118,11 @@ async def test_options_flow_relinks_and_reloads(
 ) -> None:
     before = setup_entry.runtime_data
     result = await hass.config_entries.options.async_init(setup_entry.entry_id)
+    assert result["type"] is FlowResultType.MENU
+    assert result["menu_options"] == ["links", "admin"]
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "links"}
+    )
     assert result["type"] is FlowResultType.FORM
     suggested = {str(k): k.description["suggested_value"] for k in result["data_schema"].schema}
     assert suggested == {PANEL_GATE: REAL_GATE, PANEL_FRONT: REAL_FRONT, PANEL_WORKSHOP: None}

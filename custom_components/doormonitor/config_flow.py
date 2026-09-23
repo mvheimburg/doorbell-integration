@@ -8,6 +8,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
@@ -15,9 +16,23 @@ from homeassistant.helpers.selector import (
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
+    TextSelector,
+    TextSelectorConfig,
+    TextSelectorType,
 )
 
-from .const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN, MQTT_DOMAIN
+from .api import UNREACHABLE, PanelApi, PanelApiError, api_path, normalize_url
+from .const import (
+    CONF_ADMIN_PIN,
+    CONF_API_ACTOR,
+    CONF_API_ACTOR_NAME,
+    CONF_API_TOKEN,
+    CONF_API_URL,
+    CONF_DEVICE_ID,
+    CONF_LINKS,
+    DOMAIN,
+    MQTT_DOMAIN,
+)
 from .sync import panel_entity_ids
 
 
@@ -119,20 +134,110 @@ class DoorMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class DoorMonitorOptionsFlow(OptionsFlow):
-    """Change which real entities the panel's doors and gate are linked to."""
+    """Link the doors and gate, or set up the admin connection to the panel API."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return self.async_show_menu(step_id="init", menu_options=["links", "admin"])
+
+    async def async_step_links(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Change which real entities the panel's doors and gate are linked to."""
         panel_entities = panel_entity_ids(self.hass, self.config_entry.data[CONF_DEVICE_ID])
         if not panel_entities:
             return self.async_abort(reason="no_panel_entities")
         if user_input is not None:
             return self.async_create_entry(
-                data={CONF_LINKS: _links_from_input(panel_entities, user_input)}
+                data={
+                    **self.config_entry.options,
+                    CONF_LINKS: _links_from_input(panel_entities, user_input),
+                }
             )
         return self.async_show_form(
-            step_id="init",
+            step_id="links",
             data_schema=_links_schema(
                 panel_entities, self.config_entry.options.get(CONF_LINKS) or {}
             ),
             description_placeholders={"device": self.config_entry.title},
         )
+
+    async def async_step_admin(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Where the panel API is, its token, and the doorbell admin to act as.
+
+        The PIN is only used to look the admin up (``POST /session``); the admin's id is stored,
+        never the PIN. Left empty, the PIN keeps the admin chosen before. An empty URL removes the
+        connection.
+        """
+        options = self.config_entry.options
+        errors: dict[str, str] = {}
+        placeholders = {"actor": options.get(CONF_API_ACTOR_NAME) or "–"}
+        if user_input is not None:
+            url = normalize_url(user_input.get(CONF_API_URL) or "")
+            if not url:
+                return self.async_create_entry(data={CONF_LINKS: options.get(CONF_LINKS) or {}})
+            token = user_input.get(CONF_API_TOKEN) or options.get(CONF_API_TOKEN) or ""
+            pin = (user_input.get(CONF_ADMIN_PIN) or "").strip()
+            actor = options.get(CONF_API_ACTOR)
+            if not token:
+                errors[CONF_API_TOKEN] = "token_required"
+            elif not pin and not actor:
+                errors[CONF_ADMIN_PIN] = "pin_required"
+            else:
+                api = PanelApi(async_get_clientsession(self.hass), url, token, actor)
+                try:
+                    await api.info()
+                    if pin:
+                        admin = await api.session(pin)
+                        actor, actor_name = admin["id"], admin.get("name") or ""
+                    else:
+                        # Still an active admin? Any actor route tells.
+                        actor_name = (await api.request("GET", api_path(["users", actor])))[
+                            "name"
+                        ]
+                except PanelApiError as err:
+                    errors["base"] = _admin_error(err)
+                    placeholders["detail"] = err.message
+                else:
+                    return self.async_create_entry(
+                        data={
+                            **options,
+                            CONF_API_URL: url,
+                            CONF_API_TOKEN: token,
+                            CONF_API_ACTOR: actor,
+                            CONF_API_ACTOR_NAME: actor_name,
+                        }
+                    )
+        placeholders.setdefault("detail", "")
+        suggested_url = (user_input or {}).get(CONF_API_URL, options.get(CONF_API_URL))
+        schema = vol.Schema(
+            {
+                vol.Optional(CONF_API_URL, description={"suggested_value": suggested_url}): (
+                    TextSelector(TextSelectorConfig(type=TextSelectorType.URL))
+                ),
+                vol.Optional(CONF_API_TOKEN): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
+                vol.Optional(CONF_ADMIN_PIN): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
+            }
+        )
+        return self.async_show_form(
+            step_id="admin",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders=placeholders,
+        )
+
+
+def _admin_error(err: PanelApiError) -> str:
+    """The options form error key for a panel API failure."""
+    if err.code == UNREACHABLE:
+        return "cannot_connect"
+    if err.code == "bad-token":
+        return "invalid_token"
+    if err.code == "wrong-pin":
+        return "invalid_pin"
+    if err.code == "too-many-attempts":
+        return "too_many_attempts"
+    if err.code == "not-admin" or err.status == 404:
+        return "actor_gone"
+    return "unknown"
