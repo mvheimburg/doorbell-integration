@@ -377,6 +377,8 @@ async def test_media_download_is_proxied_with_range(
     panel, _ = fake_panel
     data = panel.files[("groups", "bells", "Ding Dong.wav")]
     base = f"/api/doormonitor/{admin_entry.entry_id}/media"
+    # Before any client starts the HTTP server: its router is frozen from then on.
+    assert await async_setup_component(hass, "auth", {})
     http = await hass_client()
 
     whole = await http.get(f"{base}/groups/bells/Ding%20Dong.wav")
@@ -391,7 +393,6 @@ async def test_media_download_is_proxied_with_range(
     assert panel.requests[-1][2] == ROOT_ID
 
     # What <audio src> uses: a signed path, without the bearer header.
-    assert await async_setup_component(hass, "auth", {})
     ws_client = await hass_ws_client(hass)
     signed = await _signed(ws_client, f"{base}/photos/summer%202.jpg")
     anonymous = await hass_client_no_auth()
