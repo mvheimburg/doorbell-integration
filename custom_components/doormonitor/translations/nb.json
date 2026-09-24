@@ -36,23 +36,35 @@
       },
       "admin": {
         "title": "Administratortilkobling",
-        "description": "Ringeklokke-administrasjonen i sidepanelet styrer panelets brukere, utseende, lyder, videoer og bilder gjennom panel-API-et. Skriv inn hvor API-et er og tokenet (DOORBELL_API_TOKEN), og PIN-koden til en administrator på ringeklokken: integrasjonen handler som denne administratoren. Bare hvem administratoren er lagres, ikke PIN-koden. Handler nå som: {actor}. La token eller PIN stå tomt for å beholde det som er lagret. Tøm URL-en for å fjerne tilkoblingen.",
+        "description": "Ringeklokke-administrasjonen i sidepanelet styrer panelets brukere, utseende, lyder, videoer og bilder gjennom panel-API-et. Skriv inn hvor API-et er og tokenet (DOORBELL_API_TOKEN), og PIN-koden til en administrator på ringeklokken: integrasjonen handler som denne administratoren. Bare hvem administratoren er lagres, ikke PIN-koden. Handler nå som: {actor}. La token eller PIN stå tomt for å beholde det som er lagret. Tøm URL-en for å fjerne tilkoblingen. For en https-URL velger du hvordan Home Assistant sjekker panelets sertifikat. Å godta et sertifikat i nettleseren endrer ikke hva Home Assistant stoler på.",
         "data": {
           "api_url": "URL til panel-API-et",
+          "api_verify": "Sertifikatkontroll",
+          "api_fingerprint": "Sertifikatets fingeravtrykk (SHA-256)",
           "api_token": "API-token",
           "admin_pin": "Administrator-PIN"
         },
         "data_description": {
-          "api_url": "For eksempel http://doorbell-panel:8081. Hold porten unna det lokale nettet.",
+          "api_url": "For eksempel http://doorbell-panel:8081, eller en https-adresse bak en omvendt proxy. Hold porten unna det lokale nettet. Ikke legg brukernavn eller passord i URL-en.",
+          "api_verify": "Gjelder bare https-URL-er. Systemets tillit krever et sertifikat som er gyldig for dette vertsnavnet. Et festet fingeravtrykk godtar nøyaktig ett sertifikat, for eksempel det selvsignerte sertifikatet til en omvendt proxy.",
+          "api_fingerprint": "Bare for festet fingeravtrykk: 64 heksadesimale sifre, kolon er tillatt. Les det av sertifikatet på selve serveren, for eksempel med openssl x509 -in cert.pem -noout -fingerprint -sha256, aldri fra det denne tilkoblingen viser.",
           "admin_pin": "Den firesifrede PIN-koden til en aktiv administrator på ringeklokken, for eksempel root."
         }
       }
     },
     "error": {
+      "invalid_url": "Skriv inn en http://- eller https://-adresse med vertsnavn.",
+      "url_credentials": "Fjern brukernavn og passord fra URL-en. API-tokenet sendes for seg.",
+      "https_required": "Et festet fingeravtrykk krever en https://-URL.",
+      "invalid_fingerprint": "Skriv inn SHA-256-fingeravtrykket: 64 heksadesimale sifre, kolon er tillatt.",
       "token_required": "Skriv inn API-tokenet.",
       "pin_required": "Skriv inn en administrator-PIN.",
-      "cannot_connect": "Får ikke kontakt med panelet.",
+      "cannot_connect": "Får ikke kontakt med panelet: sjekk adressen, DNS og at panelet kjører.",
+      "tls_failed": "Home Assistant godtok ikke panelets sertifikat: det er ikke klarert eller ikke gyldig for dette vertsnavnet ({detail}). Velg en annen sertifikatkontroll, eller gi serveren et gyldig sertifikat.",
+      "fingerprint_mismatch": "Panelets sertifikat er endret: det stemmer ikke lenger med det festede fingeravtrykket. Kontroller det nye sertifikatet på selve serveren før du skriver inn fingeravtrykket.",
+      "redirect": "Paneladressen svarte med en videresending, som ikke følges slik at tokenet blir hos denne adressen. Skriv inn den endelige adressen.",
       "invalid_token": "Panelet godtok ikke API-tokenet.",
+      "forbidden": "Tilgang nektet (403). Sjekk at IP-tillatelseslisten i den omvendte proxyen tar med adressen til Home Assistant, og panelets egen tilgangskontroll.",
       "invalid_pin": "Feil PIN, eller ikke administrator.",
       "too_many_attempts": "Panelet avviser PIN-koder en stund: {detail}",
       "actor_gone": "Administratoren integrasjonen handlet som, er ikke lenger en aktiv administrator. Skriv inn en administrator-PIN.",
@@ -60,6 +72,15 @@
     },
     "abort": {
       "no_panel_entities": "Panelenheten har ikke lenger noen lås- eller dekke-entiteter."
+    }
+  },
+  "selector": {
+    "api_verify": {
+      "options": {
+        "system": "Systemets tillit (anbefalt)",
+        "fingerprint": "Festet sertifikatfingeravtrykk",
+        "disabled": "Ingen kontroll: kryptert, men serverens identitet sjekkes ikke"
+      }
     }
   }
 }

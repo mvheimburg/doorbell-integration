@@ -66,6 +66,47 @@ can therefore manage the doorbell.
   connection.
 - If that admin is later deleted, demoted or deactivated at the doorbell, the page says so. Enter an
   admin PIN again under Configure.
+- The address must not contain a user name or password, and redirects are never followed, so the
+  token is only ever sent to the address you entered. If the address redirects, enter the final one.
+
+#### HTTPS and certificate verification
+
+When the API sits behind a reverse proxy that terminates TLS (for example
+`https://door-api.example.lan`), choose under **Certificate verification** how Home Assistant checks
+the proxy's certificate. It applies to every request: the check when saving, the admin page and media
+downloads and uploads. Since 0.6.0.
+
+| Setting | What it does |
+| --- | --- |
+| **System trust** (default) | Normal validation: a trusted issuer, not expired, valid for the host name. |
+| **Pinned certificate fingerprint** | Accepts exactly the certificate with this SHA-256 fingerprint, instead of checking its issuer and host name. For a proxy's self-signed certificate. Needs an `https://` address. |
+| **No verification** | Traffic is encrypted, but the server's identity is not checked. Only if you choose it. |
+
+Accepting a certificate in your browser does not change what Home Assistant trusts, and Home
+Assistant's `http.trusted_proxies` has nothing to do with it.
+
+For a pin, read the fingerprint from the certificate **on the server itself**, or over another channel
+you trust, never from what the connection shows:
+
+```bash
+openssl x509 -in door-api-cert.pem -noout -fingerprint -sha256
+```
+
+Colons and surrounding spaces are fine. If the proxy's certificate is regenerated or replaced, the
+connection fails with *the panel's certificate has changed* until you verify the new certificate and
+enter its fingerprint. A certificate that stays the same avoids this.
+
+The integration never falls back to plain HTTP or to no verification after a TLS failure. The
+options form tells apart:
+
+- a certificate that is not trusted or not valid for the host name,
+- a certificate that does not match the pinned fingerprint,
+- a refused API token (401),
+- access denied (403): check the proxy's IP allowlist includes Home Assistant's address, as well as
+  the panel's own authorization; a 403 alone does not say which refused,
+- a panel that can't be reached at all (DNS, timeout, connection refused).
+
+Existing connections keep working unchanged: they use system trust, which is what they did before.
 
 ### Home Assistant user links
 

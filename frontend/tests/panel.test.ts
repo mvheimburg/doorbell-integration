@@ -115,6 +115,26 @@ describe("shell", () => {
     expect($$(el, "[data-user]")).toHaveLength(3);
   });
 
+  it("explains a changed certificate, in Bokmål too", async () => {
+    const mismatch = () => {
+      throw wsError(
+        "fingerprint-mismatch",
+        "fingerprint is not the pinned one",
+      );
+    };
+    const { el } = await setup({
+      handlers: { "doormonitor/admin/users": mismatch },
+    });
+    expect(text($(el, ".alert"))).toContain(
+      "The panel's certificate has changed",
+    );
+    const nb = await setup({
+      language: "nb-NO",
+      handlers: { "doormonitor/admin/users": mismatch },
+    });
+    expect(text($(nb.el, ".alert"))).toContain("Panelets sertifikat er endret");
+  });
+
   it("switches between panels when there are several", async () => {
     const data = fixtures();
     data.info.entries.push({

@@ -36,14 +36,18 @@
       },
       "admin": {
         "title": "Admin connection",
-        "description": "The Doorbell admin panel in the sidebar manages the panel's users, appearance, sounds, videos and photos through the panel API. Enter where the API is and its token (DOORBELL_API_TOKEN), and the PIN of a doorbell admin: the integration acts as that admin. Only the admin's identity is kept, not the PIN. Currently acting as: {actor}. Leave the token or PIN empty to keep the current one. Clear the URL to remove the connection.",
+        "description": "The Doorbell admin panel in the sidebar manages the panel's users, appearance, sounds, videos and photos through the panel API. Enter where the API is and its token (DOORBELL_API_TOKEN), and the PIN of a doorbell admin: the integration acts as that admin. Only the admin's identity is kept, not the PIN. Currently acting as: {actor}. Leave the token or PIN empty to keep the current one. Clear the URL to remove the connection. For an https URL, choose how Home Assistant checks the panel's certificate. Accepting a certificate in your browser does not change what Home Assistant trusts.",
         "data": {
           "api_url": "Panel API URL",
+          "api_verify": "Certificate verification",
+          "api_fingerprint": "Certificate fingerprint (SHA-256)",
           "api_token": "API token",
           "admin_pin": "Admin PIN"
         },
         "data_description": {
-          "api_url": "For example http://doorbell-panel:8081. Keep the port off the LAN.",
+          "api_url": "For example http://doorbell-panel:8081, or an https address behind a reverse proxy. Keep the port off the LAN. Do not put a user name or password in the URL.",
+          "api_verify": "Applies to https URLs only. System trust needs a certificate that is valid for this host name. A pinned fingerprint accepts exactly one certificate, such as a reverse proxy's self-signed one.",
+          "api_fingerprint": "Only for a pinned fingerprint: 64 hexadecimal digits, colons allowed. Read it from the certificate on the server itself, for example with openssl x509 -in cert.pem -noout -fingerprint -sha256, never from what this connection shows.",
           "admin_pin": "The 4-digit PIN of an active doorbell admin, for example root."
         }
       }
@@ -52,14 +56,31 @@
       "no_panel_entities": "The panel device no longer has any lock or cover entities."
     },
     "error": {
+      "invalid_url": "Enter an http:// or https:// address with a host name.",
+      "url_credentials": "Remove the user name and password from the URL. The API token is sent separately.",
+      "https_required": "A pinned fingerprint needs an https:// URL.",
+      "invalid_fingerprint": "Enter the SHA-256 fingerprint: 64 hexadecimal digits, colons allowed.",
       "token_required": "Enter the API token.",
       "pin_required": "Enter an admin PIN.",
-      "cannot_connect": "The panel is unreachable.",
+      "cannot_connect": "The panel is unreachable: check the address, DNS and that the panel is running.",
+      "tls_failed": "Home Assistant did not accept the panel's certificate: it is not trusted or not valid for this host name ({detail}). Choose another certificate verification setting, or give the server a valid certificate.",
+      "fingerprint_mismatch": "The panel's certificate has changed: it no longer matches the pinned fingerprint. Verify the new certificate on the server itself before entering its fingerprint.",
+      "redirect": "The panel address answered with a redirect, which is not followed so that the token stays with this address. Enter the final address.",
       "invalid_token": "The panel refused the API token.",
+      "forbidden": "Access was denied (403). Check that the reverse proxy's IP allowlist includes Home Assistant's address, and the panel's own authorization.",
       "invalid_pin": "Wrong PIN, or not an admin.",
       "too_many_attempts": "The panel refuses PINs for a while: {detail}",
       "actor_gone": "The admin the integration acted as is no longer an active admin. Enter an admin PIN.",
       "unknown": "The panel refused: {detail}"
+    }
+  },
+  "selector": {
+    "api_verify": {
+      "options": {
+        "system": "System trust (recommended)",
+        "fingerprint": "Pinned certificate fingerprint",
+        "disabled": "No verification: encrypted, but the server's identity is not checked"
+      }
     }
   }
 }

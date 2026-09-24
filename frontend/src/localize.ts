@@ -35,6 +35,15 @@ const en = {
   errors: {
     unreachable: "The panel is unreachable",
     "bad-response": "The panel sent an answer this app doesn't understand",
+    "tls-failed":
+      "Home Assistant did not accept the panel's certificate. Check the certificate verification setting under Configure → Admin connection.",
+    "fingerprint-mismatch":
+      "The panel's certificate has changed and no longer matches the pinned fingerprint. Verify it on the server before updating the fingerprint under Configure → Admin connection.",
+    unauthorized: "The panel API refused the authentication",
+    forbidden:
+      "Access was denied. Check the reverse proxy's IP allowlist and the panel's authorization.",
+    redirect:
+      "The panel address answered with a redirect, which is not followed. Enter the final address under Configure → Admin connection.",
     "ha-user-linked":
       "That Home Assistant user is already linked to another doorbell user",
     "unknown-ha-user": "That Home Assistant user no longer exists",
@@ -191,6 +200,15 @@ const nb: Strings = {
   errors: {
     unreachable: "Får ikke kontakt med panelet",
     "bad-response": "Panelet sendte et svar denne appen ikke forstår",
+    "tls-failed":
+      "Home Assistant godtok ikke panelets sertifikat. Sjekk sertifikatkontrollen under Konfigurer → Administratortilkobling.",
+    "fingerprint-mismatch":
+      "Panelets sertifikat er endret og stemmer ikke lenger med det festede fingeravtrykket. Kontroller det på serveren før du oppdaterer fingeravtrykket under Konfigurer → Administratortilkobling.",
+    unauthorized: "Panel-API-et avviste autentiseringen",
+    forbidden:
+      "Tilgang nektet. Sjekk IP-tillatelseslisten i den omvendte proxyen og panelets tilgangskontroll.",
+    redirect:
+      "Paneladressen svarte med en videresending, som ikke følges. Skriv inn den endelige adressen under Konfigurer → Administratortilkobling.",
     "ha-user-linked":
       "Denne Home Assistant-brukeren er allerede koblet til en annen ringeklokkebruker",
     "unknown-ha-user": "Denne Home Assistant-brukeren finnes ikke lenger",

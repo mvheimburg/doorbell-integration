@@ -8,8 +8,15 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import PanelApi
-from .const import CONF_API_ACTOR, CONF_API_ACTOR_NAME, CONF_API_TOKEN, CONF_API_URL
+from .api import PanelApi, ssl_setting
+from .const import (
+    CONF_API_ACTOR,
+    CONF_API_ACTOR_NAME,
+    CONF_API_FINGERPRINT,
+    CONF_API_TOKEN,
+    CONF_API_URL,
+    CONF_API_VERIFY,
+)
 from .links import UserLinks
 from .sync import PanelSync
 
@@ -38,6 +45,7 @@ async def async_create_admin(hass: HomeAssistant, entry: ConfigEntry) -> DoorMon
         options[CONF_API_URL],
         options[CONF_API_TOKEN],
         options.get(CONF_API_ACTOR),
+        ssl=ssl_setting(options.get(CONF_API_VERIFY), options.get(CONF_API_FINGERPRINT)),
     )
     links = UserLinks(hass, entry.entry_id)
     await links.async_load()

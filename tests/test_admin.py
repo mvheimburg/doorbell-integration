@@ -479,7 +479,7 @@ async def test_admin_step_stores_the_admin_not_the_pin(
     )
     await hass.async_block_till_done()
     assert done["type"] is FlowResultType.CREATE_ENTRY
-    assert entry.options == _options(url)
+    assert entry.options == _options(url, api_verify="system")
     assert ROOT_PIN not in str(entry.options.values())
     assert entry.runtime_data.admin is not None
 
@@ -492,7 +492,8 @@ async def test_admin_step_keeps_token_and_admin_and_can_remove_them(
     kept = await hass.config_entries.options.async_configure(form["flow_id"], {CONF_API_URL: url})
     await hass.async_block_till_done()
     assert kept["type"] is FlowResultType.CREATE_ENTRY
-    assert admin_entry.options == _options(url)
+    # An entry from before the setting existed gets system trust, as it had.
+    assert admin_entry.options == _options(url, api_verify="system")
 
     # The admin was demoted meanwhile: a PIN is needed again.
     panel.users[ROOT_ID]["accessLevel"] = "guest"

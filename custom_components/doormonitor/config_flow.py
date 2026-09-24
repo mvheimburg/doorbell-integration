@@ -21,13 +21,32 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
-from .api import UNREACHABLE, PanelApi, PanelApiError, api_path, normalize_url
+from .api import (
+    FINGERPRINT_MISMATCH,
+    FORBIDDEN,
+    REDIRECT,
+    TLS_FAILED,
+    UNAUTHORIZED,
+    UNREACHABLE,
+    VERIFY_FINGERPRINT,
+    VERIFY_MODES,
+    VERIFY_SYSTEM,
+    PanelApi,
+    PanelApiError,
+    api_path,
+    normalize_fingerprint,
+    normalize_url,
+    ssl_setting,
+    url_problem,
+)
 from .const import (
     CONF_ADMIN_PIN,
     CONF_API_ACTOR,
     CONF_API_ACTOR_NAME,
+    CONF_API_FINGERPRINT,
     CONF_API_TOKEN,
     CONF_API_URL,
+    CONF_API_VERIFY,
     CONF_DEVICE_ID,
     CONF_LINKS,
     DOMAIN,
@@ -160,11 +179,11 @@ class DoorMonitorOptionsFlow(OptionsFlow):
         )
 
     async def async_step_admin(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        """Where the panel API is, its token, and the doorbell admin to act as.
+        """The panel API's address, certificate check and token, and the admin to act as.
 
         The PIN is only used to look the admin up (``POST /session``); the admin's id is stored,
         never the PIN. Left empty, the PIN keeps the admin chosen before. An empty URL removes the
-        connection.
+        connection. Nothing is saved until the panel accepted the connection as entered.
         """
         options = self.config_entry.options
         errors: dict[str, str] = {}
@@ -173,15 +192,29 @@ class DoorMonitorOptionsFlow(OptionsFlow):
             url = normalize_url(user_input.get(CONF_API_URL) or "")
             if not url:
                 return self.async_create_entry(data={CONF_LINKS: options.get(CONF_LINKS) or {}})
+            verify = user_input.get(CONF_API_VERIFY) or VERIFY_SYSTEM
+            fingerprint = normalize_fingerprint(user_input.get(CONF_API_FINGERPRINT) or "")
             token = user_input.get(CONF_API_TOKEN) or options.get(CONF_API_TOKEN) or ""
             pin = (user_input.get(CONF_ADMIN_PIN) or "").strip()
             actor = options.get(CONF_API_ACTOR)
-            if not token:
+            if problem := url_problem(url):
+                errors[CONF_API_URL] = problem
+            elif verify == VERIFY_FINGERPRINT and fingerprint is None:
+                errors[CONF_API_FINGERPRINT] = "invalid_fingerprint"
+            elif verify == VERIFY_FINGERPRINT and not url.lower().startswith("https://"):
+                errors[CONF_API_URL] = "https_required"
+            elif not token:
                 errors[CONF_API_TOKEN] = "token_required"
             elif not pin and not actor:
                 errors[CONF_ADMIN_PIN] = "pin_required"
             else:
-                api = PanelApi(async_get_clientsession(self.hass), url, token, actor)
+                api = PanelApi(
+                    async_get_clientsession(self.hass),
+                    url,
+                    token,
+                    actor,
+                    ssl=ssl_setting(verify, fingerprint),
+                )
                 try:
                     await api.info()
                     if pin:
@@ -189,29 +222,46 @@ class DoorMonitorOptionsFlow(OptionsFlow):
                         actor, actor_name = admin["id"], admin.get("name") or ""
                     else:
                         # Still an active admin? Any actor route tells.
-                        actor_name = (await api.request("GET", api_path(["users", actor])))[
-                            "name"
-                        ]
+                        actor_name = (await api.request("GET", api_path(["users", actor])))["name"]
                 except PanelApiError as err:
                     errors["base"] = _admin_error(err)
                     placeholders["detail"] = err.message
                 else:
-                    return self.async_create_entry(
-                        data={
-                            **options,
-                            CONF_API_URL: url,
-                            CONF_API_TOKEN: token,
-                            CONF_API_ACTOR: actor,
-                            CONF_API_ACTOR_NAME: actor_name,
-                        }
-                    )
+                    data = {
+                        key: value
+                        for key, value in options.items()
+                        if key not in (CONF_API_VERIFY, CONF_API_FINGERPRINT)
+                    }
+                    data |= {
+                        CONF_API_URL: url,
+                        CONF_API_VERIFY: verify,
+                        CONF_API_TOKEN: token,
+                        CONF_API_ACTOR: actor,
+                        CONF_API_ACTOR_NAME: actor_name,
+                    }
+                    if verify == VERIFY_FINGERPRINT:
+                        data[CONF_API_FINGERPRINT] = fingerprint
+                    return self.async_create_entry(data=data)
         placeholders.setdefault("detail", "")
-        suggested_url = (user_input or {}).get(CONF_API_URL, options.get(CONF_API_URL))
+        shown = user_input or options
         schema = vol.Schema(
             {
-                vol.Optional(CONF_API_URL, description={"suggested_value": suggested_url}): (
-                    TextSelector(TextSelectorConfig(type=TextSelectorType.URL))
+                vol.Optional(
+                    CONF_API_URL, description={"suggested_value": shown.get(CONF_API_URL)}
+                ): TextSelector(TextSelectorConfig(type=TextSelectorType.URL)),
+                vol.Required(
+                    CONF_API_VERIFY, default=shown.get(CONF_API_VERIFY) or VERIFY_SYSTEM
+                ): SelectSelector(
+                    SelectSelectorConfig(
+                        options=list(VERIFY_MODES),
+                        mode=SelectSelectorMode.LIST,
+                        translation_key=CONF_API_VERIFY,
+                    )
                 ),
+                vol.Optional(
+                    CONF_API_FINGERPRINT,
+                    description={"suggested_value": shown.get(CONF_API_FINGERPRINT)},
+                ): TextSelector(),
                 vol.Optional(CONF_API_TOKEN): TextSelector(
                     TextSelectorConfig(type=TextSelectorType.PASSWORD)
                 ),
@@ -232,7 +282,13 @@ def _admin_error(err: PanelApiError) -> str:
     """The options form error key for a panel API failure."""
     if err.code == UNREACHABLE:
         return "cannot_connect"
-    if err.code == "bad-token":
+    if err.code == TLS_FAILED:
+        return "tls_failed"
+    if err.code == FINGERPRINT_MISMATCH:
+        return "fingerprint_mismatch"
+    if err.code == REDIRECT:
+        return "redirect"
+    if err.code in ("bad-token", UNAUTHORIZED):
         return "invalid_token"
     if err.code == "wrong-pin":
         return "invalid_pin"
@@ -240,4 +296,6 @@ def _admin_error(err: PanelApiError) -> str:
         return "too_many_attempts"
     if err.code == "not-admin" or err.status == 404:
         return "actor_gone"
+    if err.code == FORBIDDEN or err.status == 403:
+        return "forbidden"
     return "unknown"

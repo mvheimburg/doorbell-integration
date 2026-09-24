@@ -22,6 +22,10 @@ CONF_API_TOKEN: Final = "api_token"
 CONF_API_ACTOR: Final = "api_actor"
 #: That admin's name when it was chosen, for display (options).
 CONF_API_ACTOR_NAME: Final = "api_actor_name"
+#: How the panel's certificate is checked: ``system``, ``fingerprint`` or ``disabled`` (options).
+CONF_API_VERIFY: Final = "api_verify"
+#: SHA-256 fingerprint of the panel's certificate, 64 lower-case hex digits (options, pinning only).
+CONF_API_FINGERPRINT: Final = "api_fingerprint"
 #: Only used in the options form; never stored.
 CONF_ADMIN_PIN: Final = "admin_pin"
 
