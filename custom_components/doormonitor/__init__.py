@@ -1,5 +1,6 @@
 """The DoorMonitor integration: keep a DoorMonitor panel's doors and gate in sync with real ones,
-and manage the panel's users, appearance and media from an admin panel in Home Assistant."""
+set its party mode and house state from entities in Home Assistant, and manage the panel's users,
+appearance and media from an admin panel in Home Assistant."""
 
 from __future__ import annotations
 
@@ -14,8 +15,9 @@ from homeassistant.helpers.typing import ConfigType
 
 from . import links, panel, websocket
 from .admin import DoorMonitorData, async_create_admin
-from .const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN
+from .const import CONF_DEVICE_ID, CONF_LINKS, CONF_MODE_LINKS, DOMAIN
 from .media import MediaView
+from .modes import ModeSync, panel_mode_entities
 from .sync import PanelSync, panel_entity_ids
 
 _LOGGER = logging.getLogger(__name__)
@@ -52,11 +54,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: DoorMonitorConfigEntry) 
                 "%s: %s is no longer on the panel, not syncing it", entry.title, panel_entity
             )
 
+    mode_links = entry.options.get(CONF_MODE_LINKS) or {}
+    mode_panels = panel_mode_entities(hass, device_id)
+    for axis in mode_links.keys() - mode_panels.keys():
+        _LOGGER.warning(
+            "%s: the panel no longer has a %s select, not setting it", entry.title, axis
+        )
+
     admin = await async_create_admin(hass, entry)
     sync = PanelSync(hass, entry.title, door_links)
     sync.async_start()
+    modes = ModeSync(hass, entry.title, mode_panels, mode_links)
+    modes.async_start()
     entry.runtime_data = DoorMonitorData(sync, admin)
     entry.async_on_unload(sync.async_stop)
+    entry.async_on_unload(modes.async_stop)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await panel.async_register(hass)
     return True

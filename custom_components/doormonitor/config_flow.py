@@ -1,4 +1,4 @@
-"""Config and options flow: pick the panel's MQTT device, then link its doors and gate."""
+"""Config and options flow: pick the panel's MQTT device, then link its doors, gate and modes."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
@@ -49,10 +50,24 @@ from .const import (
     CONF_API_VERIFY,
     CONF_DEVICE_ID,
     CONF_LINKS,
+    CONF_MODE_LINKS,
     DOMAIN,
+    MODE_AXES,
+    MODE_SOURCE_DOMAINS,
     MQTT_DOMAIN,
 )
+from .modes import panel_mode_entities
 from .sync import panel_entity_ids
+
+#: The admin connection's options, dropped together when the connection is removed.
+_ADMIN_KEYS = (
+    CONF_API_URL,
+    CONF_API_VERIFY,
+    CONF_API_FINGERPRINT,
+    CONF_API_TOKEN,
+    CONF_API_ACTOR,
+    CONF_API_ACTOR_NAME,
+)
 
 
 def _device_label(device: dr.DeviceEntry) -> str:
@@ -96,6 +111,35 @@ def _links_schema(panel_entities: list[str], links: dict[str, str]) -> vol.Schem
 
 def _links_from_input(panel_entities: list[str], user_input: dict[str, Any]) -> dict[str, str]:
     return {panel: user_input[panel] for panel in panel_entities if user_input.get(panel)}
+
+
+def _modes_schema(axes: list[str], links: dict[str, dict[str, str]]) -> vol.Schema:
+    """One section per mode select on the panel, with a source picker per option but the first."""
+    source = EntitySelector(EntitySelectorConfig(domain=list(MODE_SOURCE_DOMAINS)))
+    return vol.Schema(
+        {
+            vol.Required(axis): section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            option,
+                            description={"suggested_value": (links.get(axis) or {}).get(option)},
+                        ): source
+                        for option in MODE_AXES[axis][1][1:]
+                    }
+                )
+            )
+            for axis in axes
+        }
+    )
+
+
+def _modes_from_input(axes: list[str], user_input: dict[str, Any]) -> dict[str, dict[str, str]]:
+    links = {
+        axis: {option: source for option, source in (user_input.get(axis) or {}).items() if source}
+        for axis in axes
+    }
+    return {axis: sources for axis, sources in links.items() if sources}
 
 
 class DoorMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -156,7 +200,7 @@ class DoorMonitorOptionsFlow(OptionsFlow):
     """Link the doors and gate, or set up the admin connection to the panel API."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self.async_show_menu(step_id="init", menu_options=["links", "admin"])
+        return self.async_show_menu(step_id="init", menu_options=["links", "modes", "admin"])
 
     async def async_step_links(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Change which real entities the panel's doors and gate are linked to."""
@@ -178,6 +222,24 @@ class DoorMonitorOptionsFlow(OptionsFlow):
             description_placeholders={"device": self.config_entry.title},
         )
 
+    async def async_step_modes(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Choose which entities switch the panel's party mode and house state."""
+        axes = list(panel_mode_entities(self.hass, self.config_entry.data[CONF_DEVICE_ID]))
+        if not axes:
+            return self.async_abort(reason="no_mode_entities")
+        if user_input is not None:
+            return self.async_create_entry(
+                data={
+                    **self.config_entry.options,
+                    CONF_MODE_LINKS: _modes_from_input(axes, user_input),
+                }
+            )
+        return self.async_show_form(
+            step_id="modes",
+            data_schema=_modes_schema(axes, self.config_entry.options.get(CONF_MODE_LINKS) or {}),
+            description_placeholders={"device": self.config_entry.title},
+        )
+
     async def async_step_admin(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """The panel API's address, certificate check and token, and the admin to act as.
 
@@ -191,7 +253,9 @@ class DoorMonitorOptionsFlow(OptionsFlow):
         if user_input is not None:
             url = normalize_url(user_input.get(CONF_API_URL) or "")
             if not url:
-                return self.async_create_entry(data={CONF_LINKS: options.get(CONF_LINKS) or {}})
+                return self.async_create_entry(
+                    data={key: value for key, value in options.items() if key not in _ADMIN_KEYS}
+                )
             verify = user_input.get(CONF_API_VERIFY) or VERIFY_SYSTEM
             fingerprint = normalize_fingerprint(user_input.get(CONF_API_FINGERPRINT) or "")
             token = user_input.get(CONF_API_TOKEN) or options.get(CONF_API_TOKEN) or ""

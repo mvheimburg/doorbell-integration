@@ -13,8 +13,11 @@ This integration links them to the real locks and gate in Home Assistant and kee
 - **Real → panel.** When the real lock or gate changes, for whatever reason, the panel is told, so it
   always shows the real state.
 
-It creates no entities of its own. Ring triggers, sensors, party mode and house state all come from
-the MQTT device as they are.
+It can also set the panel's **party mode** and **house state** from entities in Home Assistant, such
+as an input boolean, a schedule or a holiday calendar. See [Party mode and house state](#party-mode-and-house-state).
+
+It creates no entities of its own. Ring triggers, sensors and the party mode and house state selects
+all come from the MQTT device as they are.
 
 From 0.5 it also adds a **Doorbell** page to the sidebar, where Home Assistant administrators manage
 the panel's users, per-mode appearance, bell sounds and videos, and family photos. See
@@ -29,6 +32,41 @@ the panel's users, per-mode appearance, bell sounds and videos, and family photo
    stands for. Leave a field empty to keep that door unsynced.
 
 Links can be changed later with **Configure → Link doors and gate** on the integration.
+
+## Party mode and house state
+
+The panel's `partymode` and `house_state` selects can follow entities in Home Assistant. Under
+**Configure → Link party mode and house state**, pick an entity for each mode the panel should switch
+to while that entity is `on`:
+
+| Section | Modes you can link | Shown while none is on |
+|---------|--------------------|------------------------|
+| Party mode | Halloween, Christmas, Easter, Birthday | Normal |
+| House state | Away, Vacation | Home |
+
+Any `input_boolean`, `binary_sensor`, `switch`, `schedule` or `calendar` entity works. A calendar is
+`on` while one of its events is running, so a holiday calendar can switch the seasons. For anything
+else, such as an alarm panel's state, a template binary sensor gives you an `on`/`off` entity.
+
+The integration sets the select, and the MQTT integration then publishes the command to the panel
+(`doorbell/select/partymode/command`, `doorbell/select/house_state/command`). The rules:
+
+- **The latest wins.** If several linked entities are on, the mode whose entity turned on last is
+  shown. When it turns off, the panel goes back to the next one still on, or to Normal/Home. Entities
+  that are already on when Home Assistant starts go by the list order, so Birthday wins over
+  Christmas.
+- **A choice made on the panel is written back.** The `input_boolean` or `switch` linked to the new
+  mode is turned on and the other linked ones are turned off, so the house state set at the door
+  shows up in Home Assistant. Entities Home Assistant can't switch (binary sensors, schedules,
+  calendars) are left alone, and the panel keeps its choice until one of them changes. Either way
+  the panel's own select, `select.doorbell_house_state`, always shows what the panel shows.
+- **The panel is told again when it comes online**, because it boots in Normal and Home. Whatever
+  it reports in the next 5 s is corrected.
+- **`unavailable` and `unknown` are ignored.** The entity keeps its last state, so restarting
+  whatever provides it does not change the mode.
+
+A section only appears for a select the panel has. A party mode or house state that the panel
+carries on KNX has no MQTT select, so it can't be linked here.
 
 ## Admin panel
 
