@@ -13,6 +13,8 @@ MQTT_DOMAIN: Final = "mqtt"
 CONF_DEVICE_ID: Final = "device_id"
 #: Mapping ``panel entity_id -> real entity_id`` (options).
 CONF_LINKS: Final = "links"
+#: Mapping ``axis -> {option -> source entity_id}`` (options); see ``MODE_AXES``.
+CONF_MODE_LINKS: Final = "mode_links"
 
 #: Base URL of the panel API, e.g. ``http://doorbell-panel:8081`` (options).
 CONF_API_URL: Final = "api_url"
@@ -31,6 +33,15 @@ CONF_ADMIN_PIN: Final = "admin_pin"
 
 #: Panel entity domains that can be linked to a real entity of the same domain.
 LINKABLE_DOMAINS: Final = ("lock", "cover")
+
+#: The panel's mode selects: axis -> (unique_id suffix of its MQTT select, its options). The first
+#: option is the one the panel shows while none of the linked sources is on.
+MODE_AXES: Final[dict[str, tuple[str, tuple[str, ...]]]] = {
+    "party_mode": ("_partymode", ("normal", "halloween", "christmas", "easter", "birthday")),
+    "house_state": ("_house_state", ("home", "away", "vacation")),
+}
+#: Entities that can switch a mode on: anything whose state is ``on`` while the mode applies.
+MODE_SOURCE_DOMAINS: Final = ("binary_sensor", "calendar", "input_boolean", "schedule", "switch")
 
 # -- sync timing ---------------------------------------------------------------
 #: Seconds during which a panel state we pushed ourselves is recognised as its echo.

@@ -11,7 +11,7 @@ from homeassistant.helpers import device_registry as dr
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_mqtt_message
 from pytest_homeassistant_custom_component.typing import MqttMockHAClient, MqttMockPahoClient
 
-from custom_components.doormonitor.const import CONF_DEVICE_ID, CONF_LINKS, DOMAIN
+from custom_components.doormonitor.const import CONF_DEVICE_ID, CONF_LINKS, CONF_MODE_LINKS, DOMAIN
 
 
 @pytest.fixture(autouse=True)
@@ -75,11 +75,33 @@ _LAST_RING_CONFIG = {
     **_AVAILABILITY,
 }
 
+
+def _select_config(name: str, options: list[str]) -> dict[str, Any]:
+    return {
+        "name": name,
+        "uniq_id": f"doorbell_{name}",
+        "cmd_t": f"doorbell/select/{name}/command",
+        "stat_t": f"doorbell/select/{name}/state",
+        "ops": options,
+        "dev": _DEVICE,
+        **_AVAILABILITY,
+    }
+
+
+_SELECT_CONFIGS = {
+    "partymode": _select_config(
+        "partymode", ["normal", "halloween", "christmas", "easter", "birthday"]
+    ),
+    "house_state": _select_config("house_state", ["home", "away", "vacation"]),
+}
+
 PANEL_FRONT = "lock.doorbell_front"
 PANEL_WORKSHOP = "lock.doorbell_workshop"
 PANEL_GATE = "cover.doorbell_gate"
 REAL_FRONT = "lock.real_front"
 REAL_GATE = "cover.real_gate"
+PANEL_PARTY = "select.doorbell_partymode"
+PANEL_HOUSE = "select.doorbell_house_state"
 
 
 @pytest.fixture(autouse=True)
@@ -87,8 +109,13 @@ def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
     """Load custom_components/ in the test Home Assistant."""
 
 
-async def discover_panel(hass: HomeAssistant) -> str:
-    """Fire the panel's MQTT discovery configs, without any state; returns its device id."""
+async def discover_panel(
+    hass: HomeAssistant, selects: tuple[str, ...] = tuple(_SELECT_CONFIGS)
+) -> str:
+    """Fire the panel's MQTT discovery configs, without any state; returns its device id.
+
+    ``selects`` are the mode selects the panel has; one it leaves to KNX has none.
+    """
     for door in ("front", "workshop"):
         async_fire_mqtt_message(
             hass, f"homeassistant/lock/{door}/config", json.dumps(_lock_config(door))
@@ -97,6 +124,10 @@ async def discover_panel(hass: HomeAssistant) -> str:
     async_fire_mqtt_message(
         hass, "homeassistant/sensor/last_ring/config", json.dumps(_LAST_RING_CONFIG)
     )
+    for name in selects:
+        async_fire_mqtt_message(
+            hass, f"homeassistant/select/{name}/config", json.dumps(_SELECT_CONFIGS[name])
+        )
     await hass.async_block_till_done()
 
     (device,) = dr.async_get(hass).async_get_devices(identifiers={("mqtt", "doorbell")})
@@ -112,9 +143,12 @@ async def panel(hass: HomeAssistant, mqtt_mock: MqttMockHAClient) -> str:
     async_fire_mqtt_message(hass, "doorbell/lock/front/state", "locked")
     async_fire_mqtt_message(hass, "doorbell/lock/workshop/state", "locked")
     async_fire_mqtt_message(hass, "doorbell/cover/gate/state", "closed")
+    async_fire_mqtt_message(hass, "doorbell/select/partymode/state", "normal")
+    async_fire_mqtt_message(hass, "doorbell/select/house_state/state", "home")
     await hass.async_block_till_done()
     assert hass.states.get(PANEL_FRONT).state == "locked"
     assert hass.states.get(PANEL_GATE).state == "closed"
+    assert hass.states.get(PANEL_PARTY).state == "normal"
     return device_id
 
 
@@ -129,21 +163,30 @@ def links() -> dict[str, str]:
 
 
 @pytest.fixture
+def mode_links() -> dict[str, dict[str, str]]:
+    return {}
+
+
+@pytest.fixture
 async def setup_entry(
     hass: HomeAssistant,
     mqtt_mock: MqttMockHAClient,
     panel: str,
     real_states: dict[str, str],
     links: dict[str, str],
+    mode_links: dict[str, dict[str, str]],
 ) -> MockConfigEntry:
     for entity_id, state in real_states.items():
         hass.states.async_set(entity_id, state)
+    options: dict[str, Any] = {CONF_LINKS: links}
+    if mode_links:
+        options[CONF_MODE_LINKS] = mode_links
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="doorbell",
         unique_id=panel,
         data={CONF_DEVICE_ID: panel},
-        options={CONF_LINKS: links},
+        options=options,
         version=1,
     )
     entry.add_to_hass(hass)

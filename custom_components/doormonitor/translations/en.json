@@ -27,12 +27,35 @@
         "title": "DoorMonitor",
         "menu_options": {
           "links": "Link doors and gate",
+          "modes": "Link party mode and house state",
           "admin": "Admin connection"
         }
       },
       "links": {
         "title": "Link doors and gate",
         "description": "For each door and gate on {device}, pick the real lock or cover it stands for. Leave a field empty to leave it unsynced."
+      },
+      "modes": {
+        "title": "Link party mode and house state",
+        "description": "Pick an entity for each party mode and house state that {device} should switch to while the entity is on: an input boolean, binary sensor, switch, schedule or calendar (a calendar is on during its events). While none is on, the panel shows Normal and Home. If several are on, the one that turned on last wins. A mode chosen on the panel turns its input boolean or switch on and the others off. Other kinds of entity are left alone. Leave a field empty to not use it.",
+        "sections": {
+          "party_mode": {
+            "name": "Party mode",
+            "data": {
+              "halloween": "Halloween",
+              "christmas": "Christmas",
+              "easter": "Easter",
+              "birthday": "Birthday"
+            }
+          },
+          "house_state": {
+            "name": "House state",
+            "data": {
+              "away": "Away",
+              "vacation": "Vacation"
+            }
+          }
+        }
       },
       "admin": {
         "title": "Admin connection",
@@ -53,7 +76,8 @@
       }
     },
     "abort": {
-      "no_panel_entities": "The panel device no longer has any lock or cover entities."
+      "no_panel_entities": "The panel device no longer has any lock or cover entities.",
+      "no_mode_entities": "The panel has no party mode or house state select. Both are missing when the panel carries them on KNX."
     },
     "error": {
       "invalid_url": "Enter an http:// or https:// address with a host name.",
