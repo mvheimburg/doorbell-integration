@@ -378,7 +378,9 @@ async def test_media_download_is_proxied_with_range(
     data = panel.files[("groups", "bells", "Ding Dong.wav")]
     base = f"/api/doormonitor/{admin_entry.entry_id}/media"
     # Before any client starts the HTTP server: its router is frozen from then on.
+    # hass_ws_client below sets up websocket_api, which registers a route too.
     assert await async_setup_component(hass, "auth", {})
+    assert await async_setup_component(hass, "websocket_api", {})
     http = await hass_client()
 
     whole = await http.get(f"{base}/groups/bells/Ding%20Dong.wav")
