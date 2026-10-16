@@ -2,6 +2,8 @@
 # copying custom_components/doormonitor into your Home Assistant config directory.
 [project]
 name = "doorbell-integration-dev"
+# Placeholder, not the release version: CI releases whatever "version" is in
+# custom_components/doormonitor/manifest.json (see the release job in .github/workflows/validate.yml).
 version = "0.0.0"
 description = "Dev environment for the DoorMonitor Home Assistant custom integration"
 requires-python = ">=3.13.2"
