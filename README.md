@@ -235,3 +235,25 @@ Bump `version` in `custom_components/doormonitor/manifest.json` and push to `mai
 the tests pass, CI tags the commit `v<version>` and publishes a GitHub release listing the commits
 since the previous tag. HACS offers that release as the update. Pushes that don't change the
 version publish nothing.
+
+## Following House State
+
+Under **Settings → Devices & services → DoorMonitor → Configure → Follow House State**,
+select the House State hub sensor and which modes to follow. No changes to House State or
+the doorbell firmware are required. The panel must expose the selected mode through MQTT;
+KNX-owned axes are not available here.
+
+The resolved `overlay` attribute drives the party mode, including attribute-only changes.
+`halloween`, `christmas`, `easter` and `birthday` map directly; `none` and unmapped IDs
+use `normal`. Optional mappings such as `kids_party: birthday` override these defaults.
+Use stable IDs for mappings; display names can change independently.
+
+House state uses `occupied` and the configured vacation role in `active_path`:
+occupied becomes Home, an unoccupied vacation subtree becomes Vacation, and other
+unoccupied states become Away. Date rules, priorities and manual holds stay in House State.
+
+Following is one-way. Selected axes ignore existing on/off links and correct panel
+changes. Other axes retain their existing links. Clearing the hub restores those links.
+An unavailable hub keeps the last valid modes and logs a warning; state is reconciled
+on startup, hub recovery and panel reconnection. Appearance and media remain configurable
+per mode in the doorbell admin panel.

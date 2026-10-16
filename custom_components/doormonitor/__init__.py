@@ -15,7 +15,16 @@ from homeassistant.helpers.typing import ConfigType
 
 from . import links, panel, websocket
 from .admin import DoorMonitorData, async_create_admin
-from .const import CONF_DEVICE_ID, CONF_LINKS, CONF_MODE_LINKS, DOMAIN
+from .const import (
+    CONF_DEVICE_ID,
+    CONF_HOUSE_AXES,
+    CONF_HOUSE_STATE,
+    CONF_LINKS,
+    CONF_MODE_LINKS,
+    CONF_OVERLAY_MAP,
+    DOMAIN,
+)
+from .house_state import HouseStateSync
 from .media import MediaView
 from .modes import ModeSync, panel_mode_entities
 from .sync import PanelSync, panel_entity_ids
@@ -64,8 +73,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: DoorMonitorConfigEntry) 
     admin = await async_create_admin(hass, entry)
     sync = PanelSync(hass, entry.title, door_links)
     sync.async_start()
-    modes = ModeSync(hass, entry.title, mode_panels, mode_links)
+    source = entry.options.get(CONF_HOUSE_STATE)
+    followed = set(entry.options.get(CONF_HOUSE_AXES, [])) if source else set()
+    modes = ModeSync(
+        hass,
+        entry.title,
+        {axis: entity for axis, entity in mode_panels.items() if axis not in followed},
+        mode_links,
+    )
     modes.async_start()
+    if source:
+        house = HouseStateSync(
+            hass,
+            source,
+            {axis: entity for axis, entity in mode_panels.items() if axis in followed},
+            entry.options.get(CONF_OVERLAY_MAP) or {},
+        )
+        house.async_start()
+        entry.async_on_unload(house.async_stop)
     entry.runtime_data = DoorMonitorData(sync, admin)
     entry.async_on_unload(sync.async_stop)
     entry.async_on_unload(modes.async_stop)

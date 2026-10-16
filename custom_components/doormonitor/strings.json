@@ -28,6 +28,7 @@
         "menu_options": {
           "links": "Link doors and gate",
           "modes": "Link party mode and house state",
+          "house_state": "Follow House State",
           "admin": "Admin connection"
         }
       },
@@ -57,6 +58,15 @@
           }
         }
       },
+      "house_state": {
+        "title": "Follow House State",
+        "description": "Choose the House State hub and the axes to follow. House State controls these axes instead of the on/off mode links; panel changes are corrected without writing back. Clear the hub to stop following. Standard holiday IDs map automatically. Optional mappings use overlay IDs as keys and normal, halloween, christmas, easter or birthday as values, for example kids_party: birthday. Unmapped overlays use normal. An unavailable hub keeps the last valid modes and logs a warning.",
+        "data": {
+          "house_state_source": "House State hub",
+          "house_state_axes": "Modes to follow",
+          "overlay_map": "Custom overlay mappings"
+        }
+      },
       "admin": {
         "title": "Admin connection",
         "description": "The Doorbell admin panel in the sidebar manages the panel's users, appearance, sounds, videos and photos through the panel API. Enter where the API is and its token (DOORBELL_API_TOKEN), and the PIN of a doorbell admin: the integration acts as that admin. Only the admin's identity is kept, not the PIN. Currently acting as: {actor}. Leave the token or PIN empty to keep the current one. Clear the URL to remove the connection. For an https URL, choose how Home Assistant checks the panel's certificate. Accepting a certificate in your browser does not change what Home Assistant trusts.",
@@ -80,6 +90,7 @@
       "no_mode_entities": "The panel has no party mode or house state select. Both are missing when the panel carries them on KNX."
     },
     "error": {
+      "invalid_overlay_map": "Use an object mapping overlay IDs to normal, halloween, christmas, easter or birthday.",
       "invalid_url": "Enter an http:// or https:// address with a host name.",
       "url_credentials": "Remove the user name and password from the URL. The API token is sent separately.",
       "https_required": "A pinned fingerprint needs an https:// URL.",
@@ -99,6 +110,12 @@
     }
   },
   "selector": {
+    "house_state_axes": {
+      "options": {
+        "party_mode": "Party mode",
+        "house_state": "House state"
+      }
+    },
     "api_verify": {
       "options": {
         "system": "System trust (recommended)",

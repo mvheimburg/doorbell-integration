@@ -13,6 +13,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
+    ObjectSelector,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
@@ -49,8 +50,11 @@ from .const import (
     CONF_API_URL,
     CONF_API_VERIFY,
     CONF_DEVICE_ID,
+    CONF_HOUSE_AXES,
+    CONF_HOUSE_STATE,
     CONF_LINKS,
     CONF_MODE_LINKS,
+    CONF_OVERLAY_MAP,
     DOMAIN,
     MODE_AXES,
     MODE_SOURCE_DOMAINS,
@@ -200,7 +204,62 @@ class DoorMonitorOptionsFlow(OptionsFlow):
     """Link the doors and gate, or set up the admin connection to the panel API."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self.async_show_menu(step_id="init", menu_options=["links", "modes", "admin"])
+        return self.async_show_menu(
+            step_id="init", menu_options=["links", "modes", "house_state", "admin"]
+        )
+
+    async def async_step_house_state(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose a hub and the axes it controls instead of legacy mode links."""
+        options = self.config_entry.options
+        errors = {}
+        axes = list(panel_mode_entities(self.hass, self.config_entry.data[CONF_DEVICE_ID]))
+        if not axes:
+            return self.async_abort(reason="no_mode_entities")
+        if user_input is not None:
+            mapping = user_input.get(CONF_OVERLAY_MAP) or {}
+            if not isinstance(mapping, dict) or any(
+                not isinstance(key, str) or value not in MODE_AXES["party_mode"][1]
+                for key, value in mapping.items()
+            ):
+                errors[CONF_OVERLAY_MAP] = "invalid_overlay_map"
+            else:
+                return self.async_create_entry(
+                    data={
+                        **options,
+                        CONF_HOUSE_STATE: user_input.get(CONF_HOUSE_STATE),
+                        CONF_HOUSE_AXES: user_input.get(CONF_HOUSE_AXES, []),
+                        CONF_OVERLAY_MAP: mapping,
+                    }
+                )
+        shown = user_input if user_input is not None else options
+        return self.async_show_form(
+            step_id="house_state",
+            errors=errors,
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_HOUSE_STATE,
+                        description={
+                            "suggested_value": shown.get(CONF_HOUSE_STATE),
+                        },
+                    ): EntitySelector(
+                        EntitySelectorConfig(domain="sensor", integration="house_state")
+                    ),
+                    vol.Required(
+                        CONF_HOUSE_AXES, default=shown.get(CONF_HOUSE_AXES, axes)
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=axes, multiple=True, translation_key=CONF_HOUSE_AXES
+                        )
+                    ),
+                    vol.Optional(
+                        CONF_OVERLAY_MAP, default=shown.get(CONF_OVERLAY_MAP) or {}
+                    ): ObjectSelector(),
+                }
+            ),
+        )
 
     async def async_step_links(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Change which real entities the panel's doors and gate are linked to."""
