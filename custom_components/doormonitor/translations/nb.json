@@ -27,12 +27,22 @@
         "title": "DoorMonitor",
         "menu_options": {
           "links": "Koble dører og port",
+          "house_state": "Følg House State",
           "admin": "Administratortilkobling"
         }
       },
       "links": {
         "title": "Koble dører og port",
         "description": "Velg den ekte låsen eller porten som hver dør og port på {device} står for. La et felt stå tomt for å ikke synkronisere det."
+      },
+      "house_state": {
+        "title": "Følg House State",
+        "description": "Velg House State-sensoren og modusene som skal følges. House State styrer disse i stedet for av/på-koblingene. Endringer på panelet korrigeres uten å skrive tilbake. Tøm sensoren for å stoppe. Standard høytids-ID-er kobles automatisk. Egne koblinger bruker overleggs-ID som nøkkel og normal, halloween, christmas, easter eller birthday som verdi, for eksempel kids_party: birthday. Ukjente overlegg bruker normal. Ved utilgjengelig sensor beholdes siste gyldige modus og en advarsel logges.",
+        "data": {
+          "house_state_source": "House State-sensor",
+          "house_state_axes": "Moduser som skal følges",
+          "overlay_map": "Egne overleggskoblinger"
+        }
       },
       "admin": {
         "title": "Administratortilkobling",
@@ -53,6 +63,7 @@
       }
     },
     "error": {
+      "invalid_overlay_map": "Bruk et objekt som kobler overleggs-ID-er til normal, halloween, christmas, easter eller birthday.",
       "invalid_url": "Skriv inn en http://- eller https://-adresse med vertsnavn.",
       "url_credentials": "Fjern brukernavn og passord fra URL-en. API-tokenet sendes for seg.",
       "https_required": "Et festet fingeravtrykk krever en https://-URL.",
@@ -75,6 +86,12 @@
     }
   },
   "selector": {
+    "house_state_axes": {
+      "options": {
+        "party_mode": "Festmodus",
+        "house_state": "Hustilstand"
+      }
+    },
     "api_verify": {
       "options": {
         "system": "Systemets tillit (anbefalt)",

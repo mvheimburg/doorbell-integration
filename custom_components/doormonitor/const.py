@@ -15,6 +15,9 @@ CONF_DEVICE_ID: Final = "device_id"
 CONF_LINKS: Final = "links"
 #: Mapping ``axis -> {option -> source entity_id}`` (options); see ``MODE_AXES``.
 CONF_MODE_LINKS: Final = "mode_links"
+CONF_HOUSE_STATE: Final = "house_state_source"
+CONF_HOUSE_AXES: Final = "house_state_axes"
+CONF_OVERLAY_MAP: Final = "overlay_map"
 
 #: Base URL of the panel API, e.g. ``http://doorbell-panel:8081`` (options).
 CONF_API_URL: Final = "api_url"
