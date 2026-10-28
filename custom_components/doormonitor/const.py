@@ -18,6 +18,12 @@ CONF_MODE_LINKS: Final = "mode_links"
 CONF_HOUSE_STATE: Final = "house_state_source"
 CONF_HOUSE_AXES: Final = "house_state_axes"
 CONF_OVERLAY_MAP: Final = "overlay_map"
+#: Who is notified when the bell rings (options): a list of ``{person, only_home}``.
+CONF_RING_NOTIFY: Final = "ring_notify"
+RING_PERSON: Final = "person"
+RING_ONLY_HOME: Final = "only_home"
+#: Entity whose change is a ring, instead of the panel's bell_pressed sensor (options).
+CONF_RING_SOURCE: Final = "ring_source"
 
 #: Base URL of the panel API, e.g. ``http://doorbell-panel:8081`` (options).
 CONF_API_URL: Final = "api_url"
@@ -43,6 +49,13 @@ MODE_AXES: Final[dict[str, tuple[str, tuple[str, ...]]]] = {
     "party_mode": ("_partymode", ("normal", "halloween", "christmas", "easter", "birthday")),
     "house_state": ("_house_state", ("home", "away", "vacation")),
 }
+#: Unique-id suffix of the panel's binary sensor that pulses on for each bell press.
+BELL_PRESSED_SUFFIX: Final = "_bell_pressed"
+#: Entities that can signal a ring when the panel has no bell_pressed sensor (bell on KNX).
+RING_SOURCE_DOMAINS: Final = ("binary_sensor", "event")
+#: Seconds after a ring during which another press sends no new notification.
+RING_DEDUPE_S: Final = 10.0
+
 #: Entities that can switch a mode on: anything whose state is ``on`` while the mode applies.
 MODE_SOURCE_DOMAINS: Final = ("binary_sensor", "calendar", "input_boolean", "schedule", "switch")
 

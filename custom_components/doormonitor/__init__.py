@@ -1,6 +1,6 @@
 """The DoorMonitor integration: keep a DoorMonitor panel's doors and gate in sync with real ones,
-set its party mode and house state from entities in Home Assistant, and manage the panel's users,
-appearance and media from an admin panel in Home Assistant."""
+set its party mode and house state from entities in Home Assistant, notify chosen people when it
+rings, and manage the panel's users, appearance and media from an admin panel in Home Assistant."""
 
 from __future__ import annotations
 
@@ -22,11 +22,14 @@ from .const import (
     CONF_LINKS,
     CONF_MODE_LINKS,
     CONF_OVERLAY_MAP,
+    CONF_RING_NOTIFY,
+    CONF_RING_SOURCE,
     DOMAIN,
 )
 from .house_state import HouseStateSync
 from .media import MediaView
 from .modes import ModeSync, panel_mode_entities
+from .ring import RingNotifier, panel_bell_entity
 from .sync import PanelSync, panel_entity_ids
 
 _LOGGER = logging.getLogger(__name__)
@@ -91,6 +94,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: DoorMonitorConfigEntry) 
         )
         house.async_start()
         entry.async_on_unload(house.async_stop)
+    if people := entry.options.get(CONF_RING_NOTIFY):
+        ring_source = entry.options.get(CONF_RING_SOURCE) or panel_bell_entity(hass, device_id)
+        if ring_source:
+            device = dr.async_get(hass).async_get(device_id)
+            title = (device and (device.name_by_user or device.name)) or entry.title
+            RingNotifier(hass, entry, ring_source, people, title).async_start()
+        else:
+            _LOGGER.warning(
+                "%s: the panel has no bell_pressed sensor (is the bell on KNX?); choose a ring "
+                "signal under Configure → Ring notifications",
+                entry.title,
+            )
     entry.runtime_data = DoorMonitorData(sync, admin)
     entry.async_on_unload(sync.async_stop)
     entry.async_on_unload(modes.async_stop)

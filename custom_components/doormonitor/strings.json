@@ -29,6 +29,7 @@
           "links": "Link doors and gate",
           "modes": "Link party mode and house state",
           "house_state": "Follow House State",
+          "notify": "Ring notifications",
           "admin": "Admin connection"
         }
       },
@@ -65,6 +66,24 @@
           "house_state_source": "House State hub",
           "house_state_axes": "Modes to follow",
           "overlay_map": "Custom overlay mappings"
+        }
+      },
+      "notify": {
+        "title": "Ring notifications",
+        "description": "Choose who gets a notification on their phone when the doorbell rings. It goes to the person's Home Assistant Companion app; someone without it is not notified. On the next page you can choose, for each person, to notify them only while they are home. The ring is read from the panel's bell sensor: {bell}. Leave the people empty to turn ring notifications off.",
+        "data": {
+          "ring_notify": "People to notify",
+          "ring_source": "Ring signal"
+        },
+        "data_description": {
+          "ring_source": "Only needed when the panel has no bell sensor, for example when its bell is on KNX: a binary sensor that turns on, or an event entity that fires, when someone rings."
+        }
+      },
+      "notify_home": {
+        "title": "Only when home",
+        "description": "Tick the people who should be notified only while they are home. The others are notified wherever they are.",
+        "data": {
+          "only_home": "Only when home"
         }
       },
       "admin": {
@@ -106,7 +125,8 @@
       "invalid_pin": "Wrong PIN, or not an admin.",
       "too_many_attempts": "The panel refuses PINs for a while: {detail}",
       "actor_gone": "The admin the integration acted as is no longer an active admin. Enter an admin PIN.",
-      "unknown": "The panel refused: {detail}"
+      "unknown": "The panel refused: {detail}",
+      "ring_source_required": "The panel has no bell sensor. Choose the ring signal."
     }
   },
   "selector": {

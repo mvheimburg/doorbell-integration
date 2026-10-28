@@ -28,6 +28,7 @@
         "menu_options": {
           "links": "Koble dører og port",
           "house_state": "Følg House State",
+          "notify": "Varsel når det ringer",
           "admin": "Administratortilkobling"
         }
       },
@@ -42,6 +43,24 @@
           "house_state_source": "House State-sensor",
           "house_state_axes": "Moduser som skal følges",
           "overlay_map": "Egne overleggskoblinger"
+        }
+      },
+      "notify": {
+        "title": "Varsel når det ringer",
+        "description": "Velg hvem som skal få varsel på telefonen når det ringer på døra. Varselet går til personens Home Assistant Companion-app; den som ikke har den, varsles ikke. På neste side kan du for hver person velge at de bare varsles når de er hjemme. Ringingen leses fra panelets ringesensor: {bell}. La personfeltet stå tomt for å slå varslene av.",
+        "data": {
+          "ring_notify": "Personer som skal varsles",
+          "ring_source": "Ringesignal"
+        },
+        "data_description": {
+          "ring_source": "Trengs bare når panelet ikke har ringesensor, for eksempel når ringeklokka går på KNX: en binærsensor som slås på, eller en hendelsesentitet som utløses, når noen ringer."
+        }
+      },
+      "notify_home": {
+        "title": "Bare når hjemme",
+        "description": "Kryss av for personene som bare skal varsles når de er hjemme. De andre varsles uansett hvor de er.",
+        "data": {
+          "only_home": "Bare når hjemme"
         }
       },
       "admin": {
@@ -79,7 +98,8 @@
       "invalid_pin": "Feil PIN, eller ikke administrator.",
       "too_many_attempts": "Panelet avviser PIN-koder en stund: {detail}",
       "actor_gone": "Administratoren integrasjonen handlet som, er ikke lenger en aktiv administrator. Skriv inn en administrator-PIN.",
-      "unknown": "Panelet avviste: {detail}"
+      "unknown": "Panelet avviste: {detail}",
+      "ring_source_required": "Panelet har ingen ringesensor. Velg ringesignalet."
     },
     "abort": {
       "no_panel_entities": "Panelenheten har ikke lenger noen lås- eller dekke-entiteter."

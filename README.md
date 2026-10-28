@@ -16,6 +16,9 @@ This integration links them to the real locks and gate in Home Assistant and kee
 It can also set the panel's **party mode** and **house state** from entities in Home Assistant, such
 as an input boolean, a schedule or a holiday calendar. See [Party mode and house state](#party-mode-and-house-state).
 
+It can **notify chosen people's phones when the doorbell rings**, each of them always or only while
+they are home. See [Ring notifications](#ring-notifications).
+
 It creates no entities of its own. Ring triggers, sensors and the party mode and house state selects
 all come from the MQTT device as they are.
 
@@ -67,6 +70,26 @@ The integration sets the select, and the MQTT integration then publishes the com
 
 A section only appears for a select the panel has. A party mode or house state that the panel
 carries on KNX has no MQTT select, so it can't be linked here.
+
+## Ring notifications
+
+Under **Settings → Devices & services → DoorMonitor → Configure → Ring notifications**, pick the
+people to notify. On the next page, tick **Only when home** for each person who should be notified
+only while they are home; the others are notified wherever they are. Since 0.9.0.
+
+- The notification goes to each person's phones that run the Home Assistant Companion app (their
+  `person` entity's `mobile_app` device trackers). A person without one is skipped, with a warning
+  in the log.
+- "Home" means the `person` entity is `home`. A person whose location is unknown counts as not home.
+- The message is *Someone is at the door* (*Det ringer på døra* when Home Assistant runs in
+  Norwegian), titled with the panel's name. It is time-sensitive on iOS and high priority on
+  Android, and a new ring replaces the previous notification.
+- A ring is the panel's `bell_pressed` sensor turning on. Presses within 10 s of a ring send nothing
+  more, and the panel reconnecting is not a ring.
+- When the bell is on KNX, the panel has no `bell_pressed` sensor. Choose a **Ring signal** instead:
+  a binary sensor that turns on, or an event entity that fires, when someone rings.
+
+Clear the people to turn ring notifications off.
 
 ## Admin panel
 

@@ -55,12 +55,18 @@ from .const import (
     CONF_LINKS,
     CONF_MODE_LINKS,
     CONF_OVERLAY_MAP,
+    CONF_RING_NOTIFY,
+    CONF_RING_SOURCE,
     DOMAIN,
     MODE_AXES,
     MODE_SOURCE_DOMAINS,
     MQTT_DOMAIN,
+    RING_ONLY_HOME,
+    RING_PERSON,
+    RING_SOURCE_DOMAINS,
 )
 from .modes import panel_mode_entities
+from .ring import panel_bell_entity
 from .sync import panel_entity_ids
 
 #: The admin connection's options, dropped together when the connection is removed.
@@ -201,12 +207,102 @@ class DoorMonitorConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class DoorMonitorOptionsFlow(OptionsFlow):
-    """Link the doors and gate, or set up the admin connection to the panel API."""
+    """Link the doors and gate, choose who is notified of a ring, or set up the admin connection."""
+
+    def __init__(self) -> None:
+        self._people: list[str] = []
+        self._ring_source: str | None = None
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         return self.async_show_menu(
-            step_id="init", menu_options=["links", "modes", "house_state", "admin"]
+            step_id="init", menu_options=["links", "modes", "house_state", "notify", "admin"]
         )
+
+    async def async_step_notify(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Choose who gets a phone notification when the bell rings."""
+        options = self.config_entry.options
+        bell = panel_bell_entity(self.hass, self.config_entry.data[CONF_DEVICE_ID])
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            self._people = list(dict.fromkeys(user_input.get(CONF_RING_NOTIFY) or []))
+            self._ring_source = user_input.get(CONF_RING_SOURCE) or None
+            if self._people and not (self._ring_source or bell):
+                errors[CONF_RING_SOURCE] = "ring_source_required"
+            elif self._people:
+                return await self.async_step_notify_home()
+            else:
+                return self._save_notify([])
+            shown = user_input
+        else:
+            shown = {
+                CONF_RING_NOTIFY: [p[RING_PERSON] for p in options.get(CONF_RING_NOTIFY) or []],
+                CONF_RING_SOURCE: options.get(CONF_RING_SOURCE),
+            }
+        return self.async_show_form(
+            step_id="notify",
+            errors=errors,
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_RING_NOTIFY,
+                        description={"suggested_value": shown.get(CONF_RING_NOTIFY)},
+                    ): EntitySelector(EntitySelectorConfig(domain="person", multiple=True)),
+                    vol.Optional(
+                        CONF_RING_SOURCE,
+                        description={"suggested_value": shown.get(CONF_RING_SOURCE)},
+                    ): EntitySelector(EntitySelectorConfig(domain=list(RING_SOURCE_DOMAINS))),
+                }
+            ),
+            description_placeholders={"bell": bell or "–"},
+        )
+
+    async def async_step_notify_home(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """One checkbox per chosen person: notify them only while they are home."""
+        if user_input is not None:
+            only_home = set(user_input.get(RING_ONLY_HOME) or [])
+            return self._save_notify(
+                [
+                    {RING_PERSON: person, RING_ONLY_HOME: person in only_home}
+                    for person in self._people
+                ]
+            )
+        before = {
+            p[RING_PERSON]
+            for p in self.config_entry.options.get(CONF_RING_NOTIFY) or []
+            if p.get(RING_ONLY_HOME)
+        }
+        choices = [
+            SelectOptionDict(value=person, label=_person_name(self.hass, person))
+            for person in self._people
+        ]
+        return self.async_show_form(
+            step_id="notify_home",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        RING_ONLY_HOME, default=[p for p in self._people if p in before]
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=choices, multiple=True, mode=SelectSelectorMode.LIST
+                        )
+                    )
+                }
+            ),
+        )
+
+    def _save_notify(self, people: list[dict[str, Any]]) -> ConfigFlowResult:
+        data = {
+            key: value
+            for key, value in self.config_entry.options.items()
+            if key not in (CONF_RING_NOTIFY, CONF_RING_SOURCE)
+        }
+        if people:
+            data[CONF_RING_NOTIFY] = people
+            if self._ring_source:
+                data[CONF_RING_SOURCE] = self._ring_source
+        return self.async_create_entry(data=data)
 
     async def async_step_house_state(
         self, user_input: dict[str, Any] | None = None
@@ -399,6 +495,11 @@ class DoorMonitorOptionsFlow(OptionsFlow):
             errors=errors,
             description_placeholders=placeholders,
         )
+
+
+def _person_name(hass: HomeAssistant, entity_id: str) -> str:
+    state = hass.states.get(entity_id)
+    return state.name if state is not None else entity_id
 
 
 def _admin_error(err: PanelApiError) -> str:
