@@ -329,6 +329,26 @@ async def test_users_are_linked_to_home_assistant_users(
     assert admin_entry.runtime_data.admin.links.links == {}
 
 
+async def test_link_existing_user_sends_id_in_panel_update(
+    hass: HomeAssistant, admin_entry: MockConfigEntry, fake_panel, hass_ws_client
+) -> None:
+    panel, _ = fake_panel
+    alex = await hass.auth.async_create_user("Alex")
+    client = await hass_ws_client(hass)
+    saved = await ws(
+        client,
+        type="doormonitor/admin/save_user",
+        entry_id=admin_entry.entry_id,
+        user_id=ROOT_ID,
+        user={**_new_user("root", ROOT_PIN), "accessLevel": "admin"},
+        ha_user_id=alex.id,
+    )
+    assert saved["success"], saved
+    assert saved["result"]["id"] == ROOT_ID
+    assert panel.users[ROOT_ID]["name"] == "root"
+    assert admin_entry.runtime_data.admin.links.links == {ROOT_ID: alex.id}
+
+
 async def test_links_to_removed_users_are_pruned_and_survive_a_reload(
     hass: HomeAssistant, admin_entry: MockConfigEntry, fake_panel, hass_ws_client
 ) -> None:

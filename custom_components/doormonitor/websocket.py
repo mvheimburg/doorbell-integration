@@ -219,7 +219,10 @@ async def ws_save_user(hass: HomeAssistant, connection, msg: dict[str, Any]) -> 
             return
     try:
         if user_id:
-            stored = await admin.api.request("PUT", api_path(["users", user_id]), msg["user"])
+            # The panel requires the ID in both the URL and replacement record.
+            stored = await admin.api.request(
+                "PUT", api_path(["users", user_id]), {**msg["user"], "id": user_id}
+            )
         else:
             stored = await admin.api.request("POST", "users", msg["user"])
     except PanelApiError as err:

@@ -163,6 +163,8 @@ class FakePanel:
         return [k[2] for k in self.files if k[0] == "groups" and k[1] == group_id]
 
     def save_user(self, body: dict, user_id: str | None) -> web.Response:
+        if user_id is not None and body.get("id") != user_id:
+            return _error(422, "User body must include the ID from the URL")
         if not str(body.get("name", "")).strip():
             return _error(400, "Name is required")
         if not re.fullmatch(r"\d{4}", str(body.get("pin", ""))):
