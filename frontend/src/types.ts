@@ -31,6 +31,8 @@ export interface UserRecord {
 export interface HaUser {
   id: string;
   name: string;
+  /** Validated identities in the panel's uuidhex_major_minor format. */
+  beacons?: { id: string; name: string }[];
 }
 
 export interface UsersResponse {

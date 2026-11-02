@@ -92,6 +92,14 @@ const en = {
     string
   >,
   bleKindLabel: "{slot} kind",
+  phoneBeaconDevice: "Phone device",
+  chooseBeaconDevice: "Choose a device",
+  phoneBeaconFrom: "Beacon from {name}",
+  usePhoneBeacon: "Use phone beacon",
+  noPhoneBeacon:
+    "No phone beacon found. Enable the BLE Transmitter sensor in the Android Companion app, then reopen this tab. You can also enter an ID manually.",
+  phoneBeaconHint:
+    "Replaces the phone BLE fields in this form. Save to store the identity. Automatic login using BLE presence is not available in the panel yet.",
   save: "Save",
   cancel: "Cancel",
   delete: "Delete",
@@ -246,6 +254,14 @@ const nb: Strings = {
   ble: { phone: "BLE telefon", watch: "BLE klokke", misc: "BLE annet" },
   bleKind: { ibeacon: "iBeacon", mac: "MAC", uuid: "UUID" },
   bleKindLabel: "Type for {slot}",
+  phoneBeaconDevice: "Telefonenhet",
+  chooseBeaconDevice: "Velg en enhet",
+  phoneBeaconFrom: "Signal fra {name}",
+  usePhoneBeacon: "Bruk telefonens signal",
+  noPhoneBeacon:
+    "Fant ikke noe telefonsignal. Aktiver sensoren BLE Transmitter i Android Companion-appen, og åpne denne fanen på nytt. Du kan også skrive inn en ID manuelt.",
+  phoneBeaconHint:
+    "Erstatter BLE-feltene for telefonen i dette skjemaet. Lagre for å lagre identiteten. Automatisk innlogging med BLE-tilstedeværelse er ikke tilgjengelig i panelet ennå.",
   save: "Lagre",
   cancel: "Avbryt",
   delete: "Slett",

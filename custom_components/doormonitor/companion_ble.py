@@ -15,7 +15,7 @@ _BEACON = re.compile(
 
 @callback
 def companion_beacons(hass: HomeAssistant, user_id: str) -> list[dict[str, str]]:
-    """Return validated Companion IDs, joined by registration rather than display names."""
+    """Return panel-formatted beacon IDs, joined by registration rather than display names."""
     registry = er.async_get(hass)
     devices = dr.async_get(hass)
     found: dict[str, dict[str, str]] = {}
@@ -46,7 +46,7 @@ def companion_beacons(hass: HomeAssistant, user_id: str) -> list[dict[str, str]]
             uuid, major, minor = match.groups()
             if int(major) > 65535 or int(minor) > 65535:
                 continue
-            beacon_id = f"{uuid.lower()}_{int(major)}_{int(minor)}"
+            beacon_id = f"{uuid.replace("-", "").lower()}_{int(major)}_{int(minor)}"
             device = devices.async_get(entity.device_id) if entity.device_id else None
             if device is not None and device.disabled_by:
                 continue

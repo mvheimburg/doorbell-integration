@@ -3,6 +3,7 @@ import "../src/doormonitor-admin-panel";
 import type { DoorMonitorAdminPanel } from "../src/doormonitor-admin-panel";
 import type {
   AppearanceResponse,
+  HaUser,
   InfoResponse,
   MediaResponse,
   UserRecord,
@@ -49,7 +50,7 @@ export function fixtures() {
     ha_users: [
       { id: "ha-a", name: "Person A" },
       { id: "ha-b", name: "Person B" },
-    ],
+    ] as HaUser[],
     links: { "u-res": "ha-a" } as Record<string, string>,
   };
   const appearance: AppearanceResponse = {

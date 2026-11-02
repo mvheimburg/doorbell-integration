@@ -567,5 +567,5 @@ async def test_users_response_includes_owned_companion_beacons(
     reply = await ws(client, type="doormonitor/admin/users", entry_id=admin_entry.entry_id)
     assert reply["success"], reply
     users = {user["id"]: user for user in reply["result"]["ha_users"]}
-    assert users[alex.id]["beacons"] == [{"name": "Phone A", "id": f"{UUID}_100_40004"}]
+    assert users[alex.id]["beacons"] == [{"name": "Phone A", "id": "12345678123456789abc123456789abc_100_40004"}]
     assert users[sam.id]["beacons"] == []

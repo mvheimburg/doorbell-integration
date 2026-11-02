@@ -175,12 +175,22 @@ The panel API has no field for Home Assistant users, so the integration stores t
 panel. A Home Assistant user is linked to at most one doorbell user. Links are dropped when either
 user is deleted, and are removed with the integration entry. Linking changes nothing at the doorbell.
 
-The admin users API also reports available Companion app BLE transmitter identities for each HA
-user. Discovery matches the Companion app registration's user ID, not phone or entity names, and
-ignores disabled, unavailable or malformed transmitter sensors. This requires the Android
-Companion app's **BLE Transmitter** sensor to be enabled. Discovery does not enable transmission
-or change any doorbell BLE settings; the BLE fields in the form still accept manual input.
+When you select a Home Assistant user, the phone BLE field offers **Use phone beacon** if the
+Android Companion app reports a valid **BLE Transmitter** sensor. With multiple devices, choose
+a device first. The action fills the phone fields in the draft; **Save** stores them, and
+**Cancel** discards the draft. Existing identifiers are replaced only when you choose the action.
+If no beacon is found, enable the sensor in the Android Companion app and reopen the Users tab,
+or enter the identifier manually. Device ownership comes from the app registration, so renaming
+a phone or its sensor does not break discovery. Disabled, unavailable and malformed sensors are
+excluded. Discovery does not enable Bluetooth or change Companion app settings.
 
+Imported iBeacon values use the panel's exact `uuidhex_major_minor` format: 32 lowercase UUID
+hexadecimal characters without hyphens, then decimal major and minor (0–65535) without leading
+zeros, separated by underscores. For example: `00112233445566778899aabbccddeeff_1_513`.
+
+**Current panel limitation:** importing a beacon stores an identity compatible with its scanner;
+automatic BLE presence login is not wired into the panel yet. Importing does not enable automatic
+login or continuous synchronization of future beacon changes.
 
 ## How the sync works
 

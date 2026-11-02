@@ -26,6 +26,7 @@ interface Draft {
   end: string;
   ble: Record<BleSlot, { kind: BleKind; value: string }>;
   haUser: string;
+  beacon: string;
   /** The stored start, kept when the date field is left empty. */
   storedStart: string | null;
 }
@@ -48,6 +49,7 @@ function draftFor(user: UserRecord | null, haUser: string): Draft {
         ble,
         haUser,
         storedStart: user.start,
+        beacon: "",
       }
     : {
         id: null,
@@ -59,6 +61,7 @@ function draftFor(user: UserRecord | null, haUser: string): Draft {
         ble,
         haUser: "",
         storedStart: null,
+        beacon: "",
       };
 }
 
@@ -180,7 +183,7 @@ export class UsersTab extends Tab {
       !draft.name.trim() || draft.name === previous
         ? (this.haUserName(id) ?? draft.name)
         : draft.name;
-    this.setDraft({ haUser: id, name });
+    this.setDraft({ haUser: id, name, beacon: "" });
   }
 
   private renderForm() {
@@ -371,6 +374,73 @@ export class UsersTab extends Tab {
             set({ value: (e.target as HTMLInputElement).value })}
         />
       </div>
+      ${slot === "phone" ? this.renderBeaconOffer() : nothing}
+    </div>`;
+  }
+
+  private phoneBeacons() {
+    return (
+      this.haUsers.find((user) => user.id === this.draft?.haUser)?.beacons ?? []
+    );
+  }
+
+  /** Copy a current user's candidate into the draft; only Save persists it. */
+  private usePhoneBeacon() {
+    const draft = this.draft;
+    if (!draft || this.saving) return;
+    const beacons = this.phoneBeacons();
+    const beacon =
+      beacons.length === 1
+        ? beacons[0]
+        : beacons.find((candidate) => candidate.id === draft.beacon);
+    if (!beacon) return;
+    this.setDraft({
+      ble: { ...draft.ble, phone: { kind: "ibeacon", value: beacon.id } },
+    });
+  }
+
+  private renderBeaconOffer() {
+    const draft = this.draft!;
+    if (!draft.haUser) return nothing;
+    const beacons = this.phoneBeacons();
+    const t = this.t;
+    if (!beacons.length) {
+      return html`<p class="hint" data-beacon-empty>${t.noPhoneBeacon}</p>`;
+    }
+    const selected =
+      beacons.length === 1 ||
+      beacons.some((beacon) => beacon.id === draft.beacon);
+    return html`<div data-beacon-offer>
+      ${
+        beacons.length === 1
+          ? html`<p class="hint">
+              ${fill(t.phoneBeaconFrom, { name: beacons[0].name })}
+            </p>`
+          : html`<label class="field">
+              ${t.phoneBeaconDevice}
+              <select
+                data-field="beacon"
+                .value=${draft.beacon}
+                ?disabled=${this.saving}
+                @change=${(e: Event) => this.setDraft({ beacon: (e.target as HTMLSelectElement).value })}
+              >
+                <option value="">${t.chooseBeaconDevice}</option>
+                ${beacons.map((beacon) => html`<option value=${beacon.id}>${beacon.name}</option>`)}
+              </select>
+            </label>`
+      }
+      <p>
+        <button
+          type="button"
+          class="btn"
+          data-action="use-beacon"
+          ?disabled=${this.saving || !selected}
+          @click=${() => this.usePhoneBeacon()}
+        >
+          ${t.usePhoneBeacon}
+        </button>
+      </p>
+      <p class="hint">${t.phoneBeaconHint}</p>
     </div>`;
   }
 
