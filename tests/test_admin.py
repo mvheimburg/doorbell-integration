@@ -223,6 +223,8 @@ async def test_non_admins_cannot_use_the_api(
     client = await hass_ws_client(hass, hass_read_only_access_token)
     reply = await ws(client, type="doormonitor/admin/info")
     assert reply["error"]["code"] == "unauthorized"
+    listing = await ws(client, type="doormonitor/admin/users", entry_id=admin_entry.entry_id)
+    assert listing["error"]["code"] == "unauthorized"
 
 
 async def test_unreachable_panel(
@@ -551,3 +553,19 @@ async def test_links_step_keeps_the_admin_connection(
     await hass.config_entries.options.async_configure(result["flow_id"], {})
     await hass.async_block_till_done()
     assert admin_entry.options == _options(fake_panel[1], **{CONF_LINKS: {}})
+
+
+async def test_users_response_includes_owned_companion_beacons(
+    hass: HomeAssistant, admin_entry: MockConfigEntry, hass_ws_client
+) -> None:
+    from .test_companion_ble import UUID, sensor
+
+    alex = await hass.auth.async_create_user("Alex")
+    sam = await hass.auth.async_create_user("Sam")
+    sensor(hass, owner=alex.id, value=f"{UUID}_100_40004")
+    client = await hass_ws_client(hass)
+    reply = await ws(client, type="doormonitor/admin/users", entry_id=admin_entry.entry_id)
+    assert reply["success"], reply
+    users = {user["id"]: user for user in reply["result"]["ha_users"]}
+    assert users[alex.id]["beacons"] == [{"name": "Phone A", "id": f"{UUID}_100_40004"}]
+    assert users[sam.id]["beacons"] == []

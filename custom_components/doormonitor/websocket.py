@@ -16,6 +16,7 @@ from homeassistant.core import HomeAssistant, callback
 
 from .admin import DoorMonitorAdmin
 from .api import PanelApiError, api_path
+from .companion_ble import companion_beacons
 from .const import DOMAIN
 
 #: The panel API routes the admin panel may reach through ``doormonitor/admin/call``.
@@ -77,10 +78,10 @@ def _send_api_error(connection, msg_id: int, err: PanelApiError) -> None:
     connection.send_error(msg_id, err.code or f"http-{err.status}", err.message)
 
 
-async def _ha_users(hass: HomeAssistant) -> list[dict[str, str]]:
+async def _ha_users(hass: HomeAssistant) -> list[dict[str, Any]]:
     """The people who log in to Home Assistant: active users that are not system users."""
     users = [
-        {"id": user.id, "name": user.name or user.id}
+        {"id": user.id, "name": user.name or user.id, "beacons": companion_beacons(hass, user.id)}
         for user in await hass.auth.async_get_users()
         if user.is_active and not user.system_generated
     ]

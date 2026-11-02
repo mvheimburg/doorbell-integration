@@ -175,6 +175,13 @@ The panel API has no field for Home Assistant users, so the integration stores t
 panel. A Home Assistant user is linked to at most one doorbell user. Links are dropped when either
 user is deleted, and are removed with the integration entry. Linking changes nothing at the doorbell.
 
+The admin users API also reports available Companion app BLE transmitter identities for each HA
+user. Discovery matches the Companion app registration's user ID, not phone or entity names, and
+ignores disabled, unavailable or malformed transmitter sensors. This requires the Android
+Companion app's **BLE Transmitter** sensor to be enabled. Discovery does not enable transmission
+or change any doorbell BLE settings; the BLE fields in the form still accept manual input.
+
+
 ## How the sync works
 
 | Event | What happens |
