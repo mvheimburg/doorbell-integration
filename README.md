@@ -93,20 +93,20 @@ Clear the people to turn ring notifications off.
 
 ## Admin panel
 
-The **Doorbell** sidebar page does what the panel's own admin app (`doorbell-admin`) does, inside
-Home Assistant. It is only shown to Home Assistant administrators.
+The **Doorbell** sidebar page is shown only to Home Assistant administrators. For now, only
+**Users** is visible: add, edit and delete people who can open the door, including their PIN,
+access level (guest, resident, admin), active dates and BLE identifiers. A user can be linked to a
+Home Assistant user; selecting them in the form fills in the name.
 
-| Tab | What you do there |
-|-----|-------------------|
-| Users | Add, edit and delete the people who can open the door: PIN, access level (guest, resident, admin), active dates and BLE ids. A user can be linked to a Home Assistant user: pick them in the form and the name is filled in. |
-| Appearance | Pick the theme and the bell sounds or videos for each house mode (home, away, vacation) and party mode. Changes are saved as you pick and show on the doorbell within a second. |
-| Sounds & videos | Create, rename and delete groups of bell sounds or videos; upload, play, rename and delete their files. |
-| Photos | The photos the doorbell's home screen shows in turn. |
+Users appears when the panel advertises the `users` feature (`GET /info`). PIN format and
+uniqueness and deletion permissions are checked by the panel, whose error messages are shown as
+it words them, in English. The page itself supports English and Norwegian Bokmål, following your
+Home Assistant language.
 
-Tabs appear only for what the panel offers (`GET /info`), so an older panel shows fewer tabs. Every
-rule (PIN format and uniqueness, who may be deleted, file types and sizes) is checked by the panel,
-and its messages are shown as it words them, in English. The page itself is in English and
-Norwegian Bokmål, following your Home Assistant language.
+Appearance, Sounds & videos and Photos are temporarily hidden. Their components, translations,
+API routes and tests remain in this repository. To restore them, uncomment their entries in
+`frontend/src/tabs.ts` and rebuild the frontend bundle. `frontend/tests/archived-tabs.test.ts`
+continues exercising these components with a test-only tab list.
 
 ### Setting up the admin connection
 

@@ -482,7 +482,7 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
-`,xe=1048576;function Ae(e){return e?e.slice(0,10):""}function _e(e){return`${e}T00:00:00Z`}function Ee(e=new Date){const t=e=>String(e).padStart(2,"0");return`${e.getFullYear()}-${t(e.getMonth()+1)}-${t(e.getDate())}`}class Se extends de{constructor(){super(...arguments),this.value="",this.suffix="",this.maxLength=100,this.busy=!1,this.label="",this.text=""}willUpdate(e){e.has("value")&&(this.text=this.value)}firstUpdated(){const e=this.renderRoot.querySelector("input");e?.focus(),e?.select()}save(){const e=this.text.trim();e&&!this.busy&&this.dispatchEvent(new CustomEvent("dm-save",{detail:e}))}render(){const e=this.t;return j`<div class="rename">
+`,xe=["users"],Ae=1048576;function _e(e){return e?e.slice(0,10):""}function Ee(e){return`${e}T00:00:00Z`}function Se(e=new Date){const t=e=>String(e).padStart(2,"0");return`${e.getFullYear()}-${t(e.getMonth()+1)}-${t(e.getDate())}`}class Ue extends de{constructor(){super(...arguments),this.value="",this.suffix="",this.maxLength=100,this.busy=!1,this.label="",this.text=""}willUpdate(e){e.has("value")&&(this.text=this.value)}firstUpdated(){const e=this.renderRoot.querySelector("input");e?.focus(),e?.select()}save(){const e=this.text.trim();e&&!this.busy&&this.dispatchEvent(new CustomEvent("dm-save",{detail:e}))}render(){const e=this.t;return j`<div class="rename">
       <input
         type="text"
         aria-label=${this.label||e.newName}
@@ -513,7 +513,7 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
       >
         ${ge("close","s")}
       </button>
-    </div>`}}Se.styles=ke,Se.properties={t:{attribute:!1},value:{},suffix:{},maxLength:{type:Number},busy:{type:Boolean},label:{},text:{state:!0}};class Ue extends de{constructor(){super(...arguments),this.accept="",this.sizeMb=25,this.files=[],this.overwrite=!1,this.busy=!1}async upload(){const e=[];let t;this.busy=!0;for(const i of this.files)try{e.push(await this.api.upload(this.target(i.name),i,this.overwrite))}catch(e){t=pe(e);break}this.busy=!1,this.files=[];const i=this.renderRoot.querySelector('input[type="file"]');i&&(i.value=""),this.dispatchEvent(new CustomEvent("dm-uploaded",{detail:{names:e,error:t}}))}render(){const e=this.t;return j`<div class="upload">
+    </div>`}}Ue.styles=ke,Ue.properties={t:{attribute:!1},value:{},suffix:{},maxLength:{type:Number},busy:{type:Boolean},label:{},text:{state:!0}};class Ne extends de{constructor(){super(...arguments),this.accept="",this.sizeMb=25,this.files=[],this.overwrite=!1,this.busy=!1}async upload(){const e=[];let t;this.busy=!0;for(const i of this.files)try{e.push(await this.api.upload(this.target(i.name),i,this.overwrite))}catch(e){t=pe(e);break}this.busy=!1,this.files=[];const i=this.renderRoot.querySelector('input[type="file"]');i&&(i.value=""),this.dispatchEvent(new CustomEvent("dm-uploaded",{detail:{names:e,error:t}}))}render(){const e=this.t;return j`<div class="upload">
       <div class="line">
         <label class="check">
           <input
@@ -544,7 +544,7 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
         </button>
       </div>
       <p class="note">${$e(e.sizeNote,{n:this.sizeMb})}</p>
-    </div>`}}Ue.styles=ke,Ue.properties={t:{attribute:!1},api:{attribute:!1},target:{attribute:!1},accept:{},sizeMb:{type:Number},files:{state:!0},overwrite:{state:!0},busy:{state:!0}},customElements.get("dm-rename-form")||customElements.define("dm-rename-form",Se),customElements.get("dm-upload-form")||customElements.define("dm-upload-form",Ue);class Ne extends de{constructor(){super(...arguments),this.locale="en",this.loading=!0,this.confirming=!1,this.renameBusy=!1,this.urls={}}willUpdate(){this.api&&this.api!==this.loaded&&(this.loaded=this.api,this.load())}async load(e=!1){e||(this.loading=!0),this.loadError=void 0;try{await this.fetch()}catch(e){const t=pe(e);he.has(t.code)?this.fatal(t):this.loadError=we(this.t,t)}finally{this.loading=!1}}toast(e){this.dispatchEvent(new CustomEvent("dm-toast",{detail:e,bubbles:!0,composed:!0}))}fatal(e){this.dispatchEvent(new CustomEvent("dm-fatal",{detail:e,bubbles:!0,composed:!0}))}fail(e){const t=pe(e);he.has(t.code)?this.fatal(t):this.toast($e(this.t.failed,{message:we(this.t,t)}))}inlineError(e){const t=pe(e);if(!he.has(t.code))return we(this.t,t);this.fatal(t)}render(){const e=this.t;return j`${this.loading?j`<div class="center" role="status" aria-label=${e.loading}>
+    </div>`}}Ne.styles=ke,Ne.properties={t:{attribute:!1},api:{attribute:!1},target:{attribute:!1},accept:{},sizeMb:{type:Number},files:{state:!0},overwrite:{state:!0},busy:{state:!0}},customElements.get("dm-rename-form")||customElements.define("dm-rename-form",Ue),customElements.get("dm-upload-form")||customElements.define("dm-upload-form",Ne);class Te extends de{constructor(){super(...arguments),this.locale="en",this.loading=!0,this.confirming=!1,this.renameBusy=!1,this.urls={}}willUpdate(){this.api&&this.api!==this.loaded&&(this.loaded=this.api,this.load())}async load(e=!1){e||(this.loading=!0),this.loadError=void 0;try{await this.fetch()}catch(e){const t=pe(e);he.has(t.code)?this.fatal(t):this.loadError=we(this.t,t)}finally{this.loading=!1}}toast(e){this.dispatchEvent(new CustomEvent("dm-toast",{detail:e,bubbles:!0,composed:!0}))}fatal(e){this.dispatchEvent(new CustomEvent("dm-fatal",{detail:e,bubbles:!0,composed:!0}))}fail(e){const t=pe(e);he.has(t.code)?this.fatal(t):this.toast($e(this.t.failed,{message:we(this.t,t)}))}inlineError(e){const t=pe(e);if(!he.has(t.code))return we(this.t,t);this.fatal(t)}render(){const e=this.t;return j`${this.loading?j`<div class="center" role="status" aria-label=${e.loading}>
             ${ge("spinner","spin")}
           </div>`:void 0!==this.loadError?j`<div class="alert" role="alert">
               ${ge("warning")}
@@ -600,7 +600,7 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
       ></dm-rename-form>`}return j`<div class="file-row" data-file=${t.name}>
       <span class="fname" title=${t.name}>${t.name}</span>
       ${i?j`<span class="size"
-              >${function(e,t){if(e>=xe)return`${new Intl.NumberFormat(t,{minimumFractionDigits:1,maximumFractionDigits:1}).format(e/xe)} MB`;return`${new Intl.NumberFormat(t).format(Math.ceil(e/1024))} KB`}(t.size,this.locale)}</span
+              >${function(e,t){if(e>=Ae)return`${new Intl.NumberFormat(t,{minimumFractionDigits:1,maximumFractionDigits:1}).format(e/Ae)} MB`;return`${new Intl.NumberFormat(t).format(Math.ceil(e/1024))} KB`}(t.size,this.locale)}</span
             >`:K}
       <button
         class="icon-btn"
@@ -620,7 +620,7 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
       >
         ${ge("trash","s")}
       </button>
-    </div>`}async renameFile(e,t){this.renameBusy=!0;try{const i=await this.api.call("PATCH",["media",...e],{name:t});this.renaming=void 0,i.name!==t&&this.toast($e(this.t.renamedTo,{name:i.name})),await this.load(!0)}catch(e){this.fail(e)}finally{this.renameBusy=!1}}async deleteFile(e,t){try{await this.api.call("DELETE",["media",...e]),this.toast($e(this.t.deletedName,{name:t})),await this.load(!0)}catch(e){this.fail(e)}}async uploaded(e){const{names:t,error:i}=e.detail;if(i){if(he.has(i.code))return void this.fail(i);{const e=we(this.t,i);this.toast(t.length?$e(this.t.failedAfter,{message:e,names:t.join(", ")}):$e(this.t.failed,{message:e}))}}else this.toast($e(this.t.uploaded,{names:t.join(", ")}));await this.load(!0)}}Ne.styles=ke,Ne.properties={api:{attribute:!1},t:{attribute:!1},locale:{attribute:!1},info:{attribute:!1},loading:{state:!0},loadError:{state:!0},confirm:{state:!0},confirming:{state:!0},renaming:{state:!0},renameBusy:{state:!0},urls:{state:!0}};const Te=["guest","resident","admin"],Me=["phone","watch","misc"],Be=["ibeacon","mac","uuid"];class Ce extends Ne{constructor(){super(...arguments),this.users=[],this.haUsers=[],this.links={},this.saving=!1}async fetch(){const e=await this.api.users();this.users=e.users,this.haUsers=e.ha_users,this.links=e.links}haUserName(e){return e?this.haUsers.find(t=>t.id===e)?.name:void 0}renderContent(){const e=this.t;return j`<section class="card">
+    </div>`}async renameFile(e,t){this.renameBusy=!0;try{const i=await this.api.call("PATCH",["media",...e],{name:t});this.renaming=void 0,i.name!==t&&this.toast($e(this.t.renamedTo,{name:i.name})),await this.load(!0)}catch(e){this.fail(e)}finally{this.renameBusy=!1}}async deleteFile(e,t){try{await this.api.call("DELETE",["media",...e]),this.toast($e(this.t.deletedName,{name:t})),await this.load(!0)}catch(e){this.fail(e)}}async uploaded(e){const{names:t,error:i}=e.detail;if(i){if(he.has(i.code))return void this.fail(i);{const e=we(this.t,i);this.toast(t.length?$e(this.t.failedAfter,{message:e,names:t.join(", ")}):$e(this.t.failed,{message:e}))}}else this.toast($e(this.t.uploaded,{names:t.join(", ")}));await this.load(!0)}}Te.styles=ke,Te.properties={api:{attribute:!1},t:{attribute:!1},locale:{attribute:!1},info:{attribute:!1},loading:{state:!0},loadError:{state:!0},confirm:{state:!0},confirming:{state:!0},renaming:{state:!0},renameBusy:{state:!0},urls:{state:!0}};const Me=["guest","resident","admin"],Be=["phone","watch","misc"],Ce=["ibeacon","mac","uuid"];class Pe extends Te{constructor(){super(...arguments),this.users=[],this.haUsers=[],this.links={},this.saving=!1}async fetch(){const e=await this.api.users();this.users=e.users,this.haUsers=e.ha_users,this.links=e.links}haUserName(e){return e?this.haUsers.find(t=>t.id===e)?.name:void 0}renderContent(){const e=this.t;return j`<section class="card">
         <div class="card-head">
           <h2>${ge("users")}<span>${e.users}</span></h2>
           <button
@@ -667,7 +667,7 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
             >
               ${ge("trash","s")}
             </button>`}
-    </li>`}open(e){this.formError=void 0,this.draft=function(e,t){const i=Object.fromEntries(Me.map(t=>{const i=e?.bleData?.[t];return[t,{kind:i?.kind??"ibeacon",value:i?.value??""}]}));return e?{id:e.id,name:e.name,pin:e.pin,accessLevel:e.accessLevel,start:Ae(e.start),end:Ae(e.end),ble:i,haUser:t,storedStart:e.start,beacon:""}:{id:null,name:"",pin:"0000",accessLevel:"resident",start:Ee(),end:"",ble:i,haUser:"",storedStart:null,beacon:""}}(e,e?this.links[e.id]??"":"")}setDraft(e){this.draft&&(this.draft={...this.draft,...e})}pickHaUser(e){const t=this.draft,i=this.haUserName(t.haUser)??"",a=t.name.trim()&&t.name!==i?t.name:this.haUserName(e)??t.name;this.setDraft({haUser:e,name:a,beacon:""})}renderForm(){const e=this.draft;if(!e)return K;const t=this.t,i=new Set(Object.entries(this.links).filter(([t])=>t!==e.id).map(([,e])=>e));return j`<div class="scrim">
+    </li>`}open(e){this.formError=void 0,this.draft=function(e,t){const i=Object.fromEntries(Be.map(t=>{const i=e?.bleData?.[t];return[t,{kind:i?.kind??"ibeacon",value:i?.value??""}]}));return e?{id:e.id,name:e.name,pin:e.pin,accessLevel:e.accessLevel,start:_e(e.start),end:_e(e.end),ble:i,haUser:t,storedStart:e.start,beacon:""}:{id:null,name:"",pin:"0000",accessLevel:"resident",start:Se(),end:"",ble:i,haUser:"",storedStart:null,beacon:""}}(e,e?this.links[e.id]??"":"")}setDraft(e){this.draft&&(this.draft={...this.draft,...e})}pickHaUser(e){const t=this.draft,i=this.haUserName(t.haUser)??"",a=t.name.trim()&&t.name!==i?t.name:this.haUserName(e)??t.name;this.setDraft({haUser:e,name:a,beacon:""})}renderForm(){const e=this.draft;if(!e)return K;const t=this.t,i=new Set(Object.entries(this.links).filter(([t])=>t!==e.id).map(([,e])=>e));return j`<div class="scrim">
       <div
         class="dialog"
         role="dialog"
@@ -731,7 +731,7 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
               ?disabled=${this.saving}
               @change=${e=>this.setDraft({accessLevel:e.target.value})}
             >
-              ${Te.map(i=>j`<option
+              ${Me.map(i=>j`<option
                     value=${i}
                     ?selected=${i===e.accessLevel}
                   >
@@ -760,7 +760,7 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
               @change=${e=>this.setDraft({end:e.target.value})}
             />
           </label>
-          ${Me.map(e=>this.renderBle(e))}
+          ${Be.map(e=>this.renderBle(e))}
           <button type="submit" hidden></button>
         </form>
         <div class="dialog-actions">
@@ -791,7 +791,7 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
           ?disabled=${this.saving}
           @change=${e=>a({kind:e.target.value})}
         >
-          ${Be.map(e=>j`<option value=${e} ?selected=${e===i.kind}>
+          ${Ce.map(e=>j`<option value=${e} ?selected=${e===i.kind}>
                 ${t.bleKind[e]}
               </option>`)}
         </select>
@@ -832,10 +832,10 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
         </button>
       </p>
       <p class="hint">${i.phoneBeaconHint}</p>
-    </div>`}record(e){const t=Object.fromEntries(Me.map(t=>{const i=e.ble[t].value.trim();return[t,i?{kind:e.ble[t].kind,value:i}:null]}));return{name:e.name,pin:e.pin,accessLevel:e.accessLevel,start:e.start?_e(e.start):e.storedStart??_e(Ee()),end:e.end?_e(e.end):null,bleData:t}}async save(){const e=this.draft;if(e&&!this.saving){this.saving=!0,this.formError=void 0;try{const t=await this.api.saveUser(e.id,this.record(e),e.haUser||null);this.draft=void 0,this.toast($e(this.t.savedName,{name:t.name})),await this.load(!0)}catch(e){const t=this.inlineError(e);void 0===t?this.draft=void 0:this.formError=t}finally{this.saving=!1}}}async deleteUser(e){try{await this.api.call("DELETE",["users",e.id]),this.toast($e(this.t.deletedName,{name:e.name})),await this.load(!0)}catch(e){this.fail(e)}}}Ce.properties={...Ne.properties,users:{state:!0},haUsers:{state:!0},links:{state:!0},draft:{state:!0},formError:{state:!0},saving:{state:!0}},customElements.get("dm-users-tab")||customElements.define("dm-users-tab",Ce);const Pe=e=>`${e.scope}/${e.mode}`;class De extends Ne{constructor(){super(...arguments),this.savingKeys=new Set}async fetch(){this.data=await this.api.call("GET",["appearance"])}renderContent(){const e=this.data;return j`<p class="intro">${this.t.appearanceIntro}</p>
+    </div>`}record(e){const t=Object.fromEntries(Be.map(t=>{const i=e.ble[t].value.trim();return[t,i?{kind:e.ble[t].kind,value:i}:null]}));return{name:e.name,pin:e.pin,accessLevel:e.accessLevel,start:e.start?Ee(e.start):e.storedStart??Ee(Se()),end:e.end?Ee(e.end):null,bleData:t}}async save(){const e=this.draft;if(e&&!this.saving){this.saving=!0,this.formError=void 0;try{const t=await this.api.saveUser(e.id,this.record(e),e.haUser||null);this.draft=void 0,this.toast($e(this.t.savedName,{name:t.name})),await this.load(!0)}catch(e){const t=this.inlineError(e);void 0===t?this.draft=void 0:this.formError=t}finally{this.saving=!1}}}async deleteUser(e){try{await this.api.call("DELETE",["users",e.id]),this.toast($e(this.t.deletedName,{name:e.name})),await this.load(!0)}catch(e){this.fail(e)}}}Pe.properties={...Te.properties,users:{state:!0},haUsers:{state:!0},links:{state:!0},draft:{state:!0},formError:{state:!0},saving:{state:!0}},customElements.get("dm-users-tab")||customElements.define("dm-users-tab",Pe);const De=e=>`${e.scope}/${e.mode}`;class Le extends Te{constructor(){super(...arguments),this.savingKeys=new Set}async fetch(){this.data=await this.api.call("GET",["appearance"])}renderContent(){const e=this.data;return j`<p class="intro">${this.t.appearanceIntro}</p>
       <div class="modes">
         ${e.modes.map(({key:e,appearance:t})=>this.renderMode(e,t))}
-      </div>`}renderMode(e,t){const i=this.t,a=this.data,s="house"===e.scope,n=this.savingKeys.has(Pe(e)),r=a.groups.find(e=>e.id===a.defaultGroup),o=s?r?$e(i.defaultGroup,{name:r.name}):i.defaultNone:i.sameAsHouse;return j`<section class="card mode" data-mode=${Pe(e)}>
+      </div>`}renderMode(e,t){const i=this.t,a=this.data,s="house"===e.scope,n=this.savingKeys.has(De(e)),r=a.groups.find(e=>e.id===a.defaultGroup),o=s?r?$e(i.defaultGroup,{name:r.name}):i.defaultNone:i.sameAsHouse;return j`<section class="card mode" data-mode=${De(e)}>
       <div class="card-head">
         <h2>
           ${ge(s?"home":"party")}<span>${ye(i,e)}</span>
@@ -885,7 +885,7 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
           >${function(e,t,i,a){const s=t.groups.find(e=>e.id===a);return s?0===s.files?e.hintEmpty:"video"===s.kind?e.hintVideo:e.hintSound:"party"===i.scope?e.hintParty:t.defaultGroup?e.hintDefault:e.hintNone}(i,a,e,t.mediaGroup)}</span
         >
       </label>
-    </section>`}setMode(e,t){this.data={...this.data,modes:this.data.modes.map(i=>Pe(i.key)===Pe(e)?{key:e,appearance:t}:i)}}async pick(e,t){const i=this.data.modes.find(t=>Pe(t.key)===Pe(e)).appearance;this.setMode(e,t),this.savingKeys=new Set(this.savingKeys).add(Pe(e));try{await this.api.call("PUT",["modes",e.scope,e.mode],t),this.toast(this.t.saved)}catch(t){this.setMode(e,i),this.fail(t)}finally{const t=new Set(this.savingKeys);t.delete(Pe(e)),this.savingKeys=t}}}De.properties={...Ne.properties,data:{state:!0},savingKeys:{state:!0}},customElements.get("dm-appearance-tab")||customElements.define("dm-appearance-tab",De);const Le={sound:".wav,.mp3,.ogg",video:".mp4,.webm,.mkv"},He={sound:25,video:200},Ie=(e,t)=>t.map(t=>ye(e,t)).join(", ");function Ge(e,t){const i=t.files.length,a=[0===i?e.deleteGroupEmpty:1===i?e.deleteGroupOne:$e(e.deleteGroupMany,{n:i})];return t.usedBy.length&&a.push($e(e.modesFallBack,{modes:Ie(e,t.usedBy)})),a.push(e.cannotUndo),a}class Oe extends Ne{constructor(){super(...arguments),this.groups=[],this.newName="",this.newKind="sound",this.creating=!1,this.groupBusy=!1}async fetch(){const e=await this.api.call("GET",["media"]);this.groups=e.groups,await this.signAll(e.groups.flatMap(e=>e.files.map(t=>this.path(e,t.name))))}path(e,t){return["groups",e.id,t]}renderContent(){const e=this.t;return j`${this.renderNewGroup()}
+    </section>`}setMode(e,t){this.data={...this.data,modes:this.data.modes.map(i=>De(i.key)===De(e)?{key:e,appearance:t}:i)}}async pick(e,t){const i=this.data.modes.find(t=>De(t.key)===De(e)).appearance;this.setMode(e,t),this.savingKeys=new Set(this.savingKeys).add(De(e));try{await this.api.call("PUT",["modes",e.scope,e.mode],t),this.toast(this.t.saved)}catch(t){this.setMode(e,i),this.fail(t)}finally{const t=new Set(this.savingKeys);t.delete(De(e)),this.savingKeys=t}}}Le.properties={...Te.properties,data:{state:!0},savingKeys:{state:!0}},customElements.get("dm-appearance-tab")||customElements.define("dm-appearance-tab",Le);const He={sound:".wav,.mp3,.ogg",video:".mp4,.webm,.mkv"},Ie={sound:25,video:200},Ge=(e,t)=>t.map(t=>ye(e,t)).join(", ");function Oe(e,t){const i=t.files.length,a=[0===i?e.deleteGroupEmpty:1===i?e.deleteGroupOne:$e(e.deleteGroupMany,{n:i})];return t.usedBy.length&&a.push($e(e.modesFallBack,{modes:Ge(e,t.usedBy)})),a.push(e.cannotUndo),a}class Re extends Te{constructor(){super(...arguments),this.groups=[],this.newName="",this.newKind="sound",this.creating=!1,this.groupBusy=!1}async fetch(){const e=await this.api.call("GET",["media"]);this.groups=e.groups,await this.signAll(e.groups.flatMap(e=>e.files.map(t=>this.path(e,t.name))))}path(e,t){return["groups",e.id,t]}renderContent(){const e=this.t;return j`${this.renderNewGroup()}
     ${this.groups.length?this.groups.map(e=>this.renderGroup(e)):j`<section class="card">
             <p class="muted" data-empty>${e.noGroups}</p>
           </section>`}`}renderNewGroup(){const e=this.t;return j`<section class="card">
@@ -966,13 +966,13 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
                     data-action="delete-group"
                     aria-label=${t.deleteGroup}
                     title=${t.deleteGroup}
-                    @click=${()=>this.ask({title:$e(t.deleteTitle,{name:e.name}),lines:Ge(t,e),run:()=>this.deleteGroup(e)})}
+                    @click=${()=>this.ask({title:$e(t.deleteTitle,{name:e.name}),lines:Oe(t,e),run:()=>this.deleteGroup(e)})}
                   >
                     ${ge("trash","s")}
                   </button>
                 </div>`}
       </div>
-      <p class="intro" data-usage>${function(e,t){const i=Ie(e,t.usedBy);return t.usedBy.length&&t.isDefault?$e(e.usedAndDefault,{modes:i}):t.usedBy.length?$e(e.used,{modes:i}):t.isDefault?e.defaultOnly:e.unused}(t,e)}</p>
+      <p class="intro" data-usage>${function(e,t){const i=Ge(e,t.usedBy);return t.usedBy.length&&t.isDefault?$e(e.usedAndDefault,{modes:i}):t.usedBy.length?$e(e.used,{modes:i}):t.isDefault?e.defaultOnly:e.unused}(t,e)}</p>
       ${e.files.length?i?j`<div class="grid videos">
                 ${e.files.map(t=>{const i=this.path(e,t.name),a=this.previewUrl(i);return j`<div>
                     ${a?j`<video
@@ -998,34 +998,34 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
         .t=${t}
         .api=${this.api}
         .target=${t=>this.path(e,t)}
-        accept=${Le[e.kind]}
-        .sizeMb=${He[e.kind]}
+        accept=${He[e.kind]}
+        .sizeMb=${Ie[e.kind]}
         @dm-uploaded=${e=>this.uploaded(e)}
       ></dm-upload-form>
-    </section>`}async create(){const e=this.newName.trim();if(e&&!this.creating){this.creating=!0;try{const t=await this.api.call("POST",["media-groups"],{name:e,kind:this.newKind});this.newName="",this.toast($e(this.t.createdName,{name:t.name})),await this.load(!0)}catch(e){this.fail(e)}finally{this.creating=!1}}}async renameGroup(e,t){this.groupBusy=!0;try{await this.api.call("PATCH",["media-groups",e.id],{name:t}),this.renamingGroup=void 0,await this.load(!0)}catch(e){this.fail(e)}finally{this.groupBusy=!1}}async deleteGroup(e){try{await this.api.call("DELETE",["media-groups",e.id]),this.toast($e(this.t.deletedName,{name:e.name})),await this.load(!0)}catch(e){this.fail(e)}}}Oe.properties={...Ne.properties,groups:{state:!0},newName:{state:!0},newKind:{state:!0},creating:{state:!0},renamingGroup:{state:!0},groupBusy:{state:!0}},customElements.get("dm-media-tab")||customElements.define("dm-media-tab",Oe);const Re=e=>["photos",e];class ze extends Ne{constructor(){super(...arguments),this.photos=[]}async fetch(){const e=await this.api.call("GET",["media"]);this.photos=e.photos,await this.signAll(e.photos.map(e=>Re(e.name)))}renderContent(){const e=this.t;return j`<section class="card">
+    </section>`}async create(){const e=this.newName.trim();if(e&&!this.creating){this.creating=!0;try{const t=await this.api.call("POST",["media-groups"],{name:e,kind:this.newKind});this.newName="",this.toast($e(this.t.createdName,{name:t.name})),await this.load(!0)}catch(e){this.fail(e)}finally{this.creating=!1}}}async renameGroup(e,t){this.groupBusy=!0;try{await this.api.call("PATCH",["media-groups",e.id],{name:t}),this.renamingGroup=void 0,await this.load(!0)}catch(e){this.fail(e)}finally{this.groupBusy=!1}}async deleteGroup(e){try{await this.api.call("DELETE",["media-groups",e.id]),this.toast($e(this.t.deletedName,{name:e.name})),await this.load(!0)}catch(e){this.fail(e)}}}Re.properties={...Te.properties,groups:{state:!0},newName:{state:!0},newKind:{state:!0},creating:{state:!0},renamingGroup:{state:!0},groupBusy:{state:!0}},customElements.get("dm-media-tab")||customElements.define("dm-media-tab",Re);const ze=e=>["photos",e];class je extends Te{constructor(){super(...arguments),this.photos=[]}async fetch(){const e=await this.api.call("GET",["media"]);this.photos=e.photos,await this.signAll(e.photos.map(e=>ze(e.name)))}renderContent(){const e=this.t;return j`<section class="card">
       <div class="card-head">
         <h2>${ge("image")}<span>${e.photosTitle}</span></h2>
       </div>
       <p class="intro">${e.photosIntro}</p>
       ${this.photos.length?j`<div class="grid photos">
-              ${this.photos.map(e=>{const t=this.previewUrl(Re(e.name));return j`<div class="photo">
+              ${this.photos.map(e=>{const t=this.previewUrl(ze(e.name));return j`<div class="photo">
                   ${t?j`<img
                           src=${t}
                           alt=${e.name}
                           loading="lazy"
                         />`:K}
-                  ${this.fileRow(Re(e.name),e,!1)}
+                  ${this.fileRow(ze(e.name),e,!1)}
                 </div>`})}
             </div>`:j`<p class="muted" data-empty>${e.noPhotos}</p>`}
       <dm-upload-form
         .t=${e}
         .api=${this.api}
-        .target=${Re}
+        .target=${ze}
         accept=".gif,.jpeg,.jpg,.png,.webp"
         .sizeMb=${25}
         @dm-uploaded=${e=>this.uploaded(e)}
       ></dm-upload-form>
-    </section>`}}ze.properties={...Ne.properties,photos:{state:!0}},customElements.get("dm-photos-tab")||customElements.define("dm-photos-tab",ze);const je=["users","appearance","media-groups","photos"];class Ve extends de{constructor(){super(...arguments),this.narrow=!1,this.loading=!0,this.started=!1}get t(){return ve(this.hass)}get tabs(){const e=this.info?.info?.features??[];return je.filter(t=>e.includes(t))}willUpdate(e){e.has("hass")&&this.hass&&(this.api&&(this.api.hass=this.hass),this.started||(this.started=!0,this.loadInfo()))}async loadInfo(e){this.loading=!0,this.loadError=void 0,this.page=void 0;try{const t=await this.hass.callWS({type:"doormonitor/admin/info",...e?{entry_id:e}:{}});this.info=t,t.entry_id?t.configured?t.error?this.onError(new ce(t.error.message,t.error.code)):(this.api?.entryId!==t.entry_id&&(this.api=new ue(this.hass,t.entry_id)),this.tab&&this.tabs.includes(this.tab)||(this.tab=this.tabs[0])):this.page={kind:"not-configured"}:this.page={kind:"no-entries"}}catch(e){this.loadError=we(this.t,pe(e))}finally{this.loading=!1}}onError(e){"not-admin"===e.code?this.page={kind:"not-admin"}:"bad-token"===e.code?this.page={kind:"bad-token"}:"not-configured"===e.code?this.page={kind:"not-configured"}:this.loadError=we(this.t,e)}showToast(e){this.toastText=e,window.clearTimeout(this.toastTimer),this.toastTimer=window.setTimeout(()=>this.toastText=void 0,2200)}openSettings(){history.pushState(null,"","/config/integrations/integration/doormonitor"),window.dispatchEvent(new CustomEvent("location-changed",{detail:{replace:!1}}))}toggleMenu(){this.dispatchEvent(new Event("hass-toggle-menu",{bubbles:!0,composed:!0}))}disconnectedCallback(){super.disconnectedCallback(),window.clearTimeout(this.toastTimer)}render(){const e=this.t;return j`${this.renderBar()}
+    </section>`}}je.properties={...Te.properties,photos:{state:!0}},customElements.get("dm-photos-tab")||customElements.define("dm-photos-tab",je);class Ve extends de{constructor(){super(...arguments),this.narrow=!1,this.loading=!0,this.started=!1}get t(){return ve(this.hass)}get tabs(){const e=this.info?.info?.features??[];return xe.filter(t=>e.includes(t))}willUpdate(e){e.has("hass")&&this.hass&&(this.api&&(this.api.hass=this.hass),this.started||(this.started=!0,this.loadInfo()))}async loadInfo(e){this.loading=!0,this.loadError=void 0,this.page=void 0;try{const t=await this.hass.callWS({type:"doormonitor/admin/info",...e?{entry_id:e}:{}});this.info=t,t.entry_id?t.configured?t.error?this.onError(new ce(t.error.message,t.error.code)):(this.api?.entryId!==t.entry_id&&(this.api=new ue(this.hass,t.entry_id)),this.tab&&this.tabs.includes(this.tab)||(this.tab=this.tabs[0])):this.page={kind:"not-configured"}:this.page={kind:"no-entries"}}catch(e){this.loadError=we(this.t,pe(e))}finally{this.loading=!1}}onError(e){"not-admin"===e.code?this.page={kind:"not-admin"}:"bad-token"===e.code?this.page={kind:"bad-token"}:"not-configured"===e.code?this.page={kind:"not-configured"}:this.loadError=we(this.t,e)}showToast(e){this.toastText=e,window.clearTimeout(this.toastTimer),this.toastTimer=window.setTimeout(()=>this.toastText=void 0,2200)}openSettings(){history.pushState(null,"","/config/integrations/integration/doormonitor"),window.dispatchEvent(new CustomEvent("location-changed",{detail:{replace:!1}}))}toggleMenu(){this.dispatchEvent(new Event("hass-toggle-menu",{bubbles:!0,composed:!0}))}disconnectedCallback(){super.disconnectedCallback(),window.clearTimeout(this.toastTimer)}render(){const e=this.t;return j`${this.renderBar()}
       <main
         @dm-toast=${e=>this.showToast(e.detail)}
         @dm-fatal=${e=>this.onError(e.detail)}
@@ -1231,4 +1231,4 @@ const e=globalThis,t=e.ShadowRoot&&(void 0===e.ShadyCSS||e.ShadyCSS.nativeShadow
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
         max-width: calc(100vw - 32px);
       }
-    `],Ve.properties={hass:{attribute:!1},narrow:{type:Boolean,reflect:!0},route:{attribute:!1},panel:{attribute:!1},info:{state:!0},loading:{state:!0},loadError:{state:!0},page:{state:!0},tab:{state:!0},toastText:{state:!0},api:{state:!0}},customElements.get("doormonitor-admin-panel")||customElements.define("doormonitor-admin-panel",Ve);export{Ve as DoorMonitorAdminPanel,je as TABS};
+    `],Ve.properties={hass:{attribute:!1},narrow:{type:Boolean,reflect:!0},route:{attribute:!1},panel:{attribute:!1},info:{state:!0},loading:{state:!0},loadError:{state:!0},page:{state:!0},tab:{state:!0},toastText:{state:!0},api:{state:!0}},customElements.get("doormonitor-admin-panel")||customElements.define("doormonitor-admin-panel",Ve);export{Ve as DoorMonitorAdminPanel,xe as TABS};

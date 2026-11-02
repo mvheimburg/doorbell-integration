@@ -1,6 +1,7 @@
 # DoorMonitor admin panel design
 
-DoorMonitor's sidebar panel manages doorbell users, appearance and media inside Home Assistant.
+DoorMonitor's sidebar panel currently exposes Users only. Appearance and media components are
+retained for later restoration through the tab list in `frontend/src/tabs.ts`.
 Preserve the existing Lit form and tab language; household configuration should feel native to
 this panel. English and Bokmål labels follow Home Assistant's language without renaming user data.
 

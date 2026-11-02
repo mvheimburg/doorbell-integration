@@ -9,15 +9,14 @@ import {
   type Strings,
 } from "./localize";
 import { styles } from "./styles";
+import { TABS, type TabId } from "./tabs";
 import type { HomeAssistant, InfoResponse } from "./types";
 import "./users-tab";
 import "./appearance-tab";
 import "./media-tab";
 import "./photos-tab";
 
-/** The tabs, in order, each shown only when the panel lists its feature. */
-export const TABS = ["users", "appearance", "media-groups", "photos"] as const;
-export type TabId = (typeof TABS)[number];
+export { TABS, type TabId } from "./tabs";
 
 const TOAST_MS = 2200;
 const SETTINGS_PATH = "/config/integrations/integration/doormonitor";
